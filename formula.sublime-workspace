@@ -1,0 +1,561 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"rep",
+				"repMaxHistoryOf"
+			],
+			[
+				"id",
+				"id_barang"
+			],
+			[
+				"nama",
+				"nama_jenis"
+			],
+			[
+				"mysq",
+				"mysql"
+			],
+			[
+				"dateti",
+				"datetime"
+			],
+			[
+				"font-",
+				"font-family\tproperty"
+			],
+			[
+				"add",
+				"addLiftWithDate"
+			],
+			[
+				"exc",
+				"excList"
+			],
+			[
+				"ex",
+				"exercise"
+			],
+			[
+				"US",
+				"user_id"
+			],
+			[
+				"mac",
+				"macrosMaintenance"
+			],
+			[
+				"tde",
+				"tdeeCalc"
+			],
+			[
+				"bmi",
+				"bmiScore"
+			],
+			[
+				"a",
+				"activityLevel"
+			],
+			[
+				"date",
+				"dateCreated"
+			],
+			[
+				"user",
+				"user_id"
+			],
+			[
+				"if",
+				"ifmain\tif __name__ == '__main__'"
+			],
+			[
+				"us",
+				"user_id"
+			],
+			[
+				"c",
+				"cursor"
+			],
+			[
+				"con",
+				"connection"
+			],
+			[
+				"conn",
+				"connection"
+			],
+			[
+				"wilk",
+				"wilkScore"
+			],
+			[
+				"re",
+				"returnOneRM"
+			],
+			[
+				"retur",
+				"returnOneRM"
+			],
+			[
+				"on",
+				"oneRM"
+			],
+			[
+				"wi",
+				"wilkScore"
+			],
+			[
+				"wilkCoe",
+				"wilkCoeffM"
+			],
+			[
+				"ca",
+				"calcBestLift"
+			],
+			[
+				"r",
+				"records"
+			],
+			[
+				"nu",
+				"numOfRecords"
+			],
+			[
+				"set",
+				"setLayout"
+			],
+			[
+				"Q",
+				"QtCore"
+			],
+			[
+				"se",
+				"setWindowTitle"
+			],
+			[
+				"def",
+				"def __init__(self\t1★ pro ⟠"
+			],
+			[
+				"im",
+				"import sys\t3★ pro ⟠"
+			],
+			[
+				"QtW",
+				"QtWidgets import\t3★ pro ⟠"
+			],
+			[
+				"P",
+				"PyQt4\tmodule ⟠"
+			],
+			[
+				"ke",
+				"keyword\t⟠"
+			],
+			[
+				"au",
+				"autocomplete\tAttr"
+			],
+			[
+				"auto",
+				"autofocus\tAttr"
+			],
+			[
+				"upda",
+				"updateform.php"
+			],
+			[
+				"fo",
+				"for\tAttr"
+			],
+			[
+				"ac",
+				"action\tAttr"
+			],
+			[
+				"value",
+				"value=\"id\"\t⟠"
+			],
+			[
+				"var",
+				"var_dump\t⟠"
+			],
+			[
+				"m",
+				"mysqli_affected_rows\t⟠"
+			],
+			[
+				"mysqli_",
+				"mysqli_fetch_assoc\t⟠"
+			],
+			[
+				"SELE",
+				"SELECT * FROM\t⟠"
+			],
+			[
+				"cel",
+				"cellspacing\tAttr"
+			],
+			[
+				"sript",
+				"script.js"
+			],
+			[
+				"doc",
+				"document.getElementById\t⟠"
+			],
+			[
+				"onc",
+				"onclick\tAttr"
+			],
+			[
+				"ba",
+				"background\tproperty"
+			],
+			[
+				"for",
+				"form\tTag"
+			],
+			[
+				"ove",
+				"text-overflow\tproperty"
+			],
+			[
+				"b",
+				"break-word\toverflow-wrap"
+			],
+			[
+				"margin",
+				"margin\tproperty"
+			],
+			[
+				"mar",
+				"margin\t⟠"
+			],
+			[
+				"inl",
+				"inline-block\tdisplay"
+			],
+			[
+				"font",
+				"font-size\tproperty"
+			],
+			[
+				"font-s",
+				"font-size\tproperty"
+			],
+			[
+				"margi",
+				"margin-bottom\tproperty"
+			],
+			[
+				"float",
+				"float\tproperty"
+			],
+			[
+				"transition-",
+				"transition-timing-function\tproperty"
+			],
+			[
+				"tra",
+				"transition-duration\tproperty"
+			],
+			[
+				"border-r",
+				"border-radius\tproperty"
+			],
+			[
+				"rad",
+				"border-radius\tproperty"
+			],
+			[
+				"url",
+				"url()\tbackground-image"
+			],
+			[
+				"pad",
+				"padding\tproperty"
+			],
+			[
+				"C",
+				"Courier\t⟠"
+			],
+			[
+				"marg",
+				"margin\tproperty"
+			],
+			[
+				"obj",
+				"object-fit: cover;\t⟠"
+			],
+			[
+				"sa",
+				"sains.html"
+			],
+			[
+				"displ",
+				"display: block;\t⟠"
+			],
+			[
+				"max",
+				"max-height\tproperty"
+			],
+			[
+				"max-",
+				"max-width\tproperty"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"SET SYNTAX: H",
+				"Set Syntax: HTML"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/D/Practice/QtDesigner/Project/env/formula.py",
+		"/D/Practice/QtDesigner/Project/formula.py",
+		"/D/Practice/QtDesigner/Project/env/sql.py",
+		"/C/xampp/htdocs/UTSWebFramework/templates/base.html",
+		"/C/xampp/htdocs/UTSWebFramework/templates/index.html",
+		"/C/xampp/htdocs/UTSWebFramework/app.py",
+		"/C/xampp/htdocs/UTSWebFramework/static/css/main.css",
+		"/C/xampp/htdocs/UTSWebFramework/static/js/bootstrap.js",
+		"/C/xampp/htdocs/UTSWebFramework/index.html",
+		"/D/Practice/QtDesigner/sql.py",
+		"/D/Practice/QtDesigner/predict.py",
+		"/D/Practice/QtDesigner/excercise.py",
+		"/D/All Tugas Goes Here/Web Framework/CRUD/home.html",
+		"/D/All Tugas Goes Here/Web Framework/CRUD/app.py",
+		"/D/All Tugas Goes Here/Web Framework/CRUD/edit.html",
+		"/D/All Tugas Goes Here/Web Framework/CRUD/tambah.html",
+		"/D/All Tugas Goes Here/Web Framework/CRUD/index.html",
+		"/D/All Tugas Goes Here/Web Framework/CRUD/main.py",
+		"/D/Practice/QtDesigner/testswitch.py",
+		"/D/Practice/QtDesigner/switch.py",
+		"/D/Practice/QtDesigner/mainlogin.py",
+		"/D/Practice/QtDesigner/main.py",
+		"/D/Practice/New folder/qdialog.py",
+		"/D/Practice/New folder/LayoutMgmt.py",
+		"/D/Practice/New folder/SignalAndSlots.py",
+		"/D/Practice/New folder/MainWindow.py",
+		"/D/Practice/QtDesigner/login.py",
+		"/D/Practice/New folder/QPushButton.py",
+		"/C/xampp/htdocs/UAS/style.css",
+		"/C/xampp/htdocs/UAS/function.php",
+		"/C/xampp/htdocs/UAS/daftarbarang.php",
+		"/C/xampp/htdocs/UAS/updateform.php",
+		"/C/xampp/htdocs/UAS/update.php",
+		"/C/xampp/htdocs/UAS/deleteprocess.php",
+		"/C/xampp/htdocs/UAS/delete.php",
+		"/C/xampp/htdocs/UAS/insert.php",
+		"/C/xampp/htdocs/UAS/index.php",
+		"/C/xampp/htdocs/UAS/updateprocess.php",
+		"/C/xampp/htdocs/UAS/edit.php",
+		"/C/xampp/htdocs/tes/index.php",
+		"/C/xampp/htdocs/tes/function.php",
+		"/C/xampp/htdocs/UAS/script.js",
+		"/D/All Tugas Goes Here/PPW/UTS_TRPL2B_AndiFathul/index.html",
+		"/C/xampp/htdocs/latihan/gbproses.php",
+		"/C/xampp/htdocs/latihan/gbook.php",
+		"/C/xampp/htdocs/latihan/koneksi.php",
+		"/D/All Tugas Goes Here/PPW/UTS_TRPL2B_AndiFathul/script.js",
+		"/D/All Tugas Goes Here/PPW/latihan/list.php",
+		"/D/All Tugas Goes Here/PPW/latihan/gbproses.php",
+		"/D/All Tugas Goes Here/PPW/latihan/koneksi.php",
+		"/D/All Tugas Goes Here/PPW/latihan/gbook.php",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/style.css",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/teacher.html",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/contact.html",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/index.html",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/studentform.html",
+		"/D/All Tugas Goes Here/PPW/colorlib-regform-15/index.html",
+		"/D/All Tugas Goes Here/PPW/colorlib-regform-15/css/style.css",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/style1.css",
+		"/D/All Tugas Goes Here/PPW/UTS_AndiFathul/calendar.html",
+		"/D/All Tugas Goes Here/Project/video.html",
+		"/D/All Tugas Goes Here/Project/index.html",
+		"/D/All Tugas Goes Here/New folder/Project/video.html",
+		"/D/All Tugas Goes Here/New folder/Project/kontak.html",
+		"/D/All Tugas Goes Here/New folder/Project/style.css",
+		"/D/All Tugas Goes Here/New folder/Project/sport.html",
+		"/D/All Tugas Goes Here/New folder/Project/sains.html",
+		"/D/All Tugas Goes Here/New folder/Project/article-1.html",
+		"/D/All Tugas Goes Here/New folder/Project/index.html",
+		"/D/All Tugas Goes Here/New folder/Project/videos2.html",
+		"/D/All Tugas Goes Here/New folder/Project/videos.html",
+		"/C/Users/LENOVO/AppData/Local/Temp/kite_tutorial.py",
+		"/C/Users/LENOVO/AppData/Roaming/Sublime Text 3/Packages/Alignment/Base File.sublime-settings"
+	],
+	"find":
+	{
+		"height": 30.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 30.0
+	},
+	"input":
+	{
+		"height": 68.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.SFTP":
+	{
+		"height": 0.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/Python 3/Python3.sublime-build",
+	"project": "formula.sublime-project",
+	"replace":
+	{
+		"height": 56.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

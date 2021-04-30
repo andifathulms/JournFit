@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="Image">
+    <file>Tulisan JournFit-01.png</file>
+  </qresource>
+  <qresource prefix="ButtonIcon">
+    <file>homeWhiteColor24Px.png</file>
+    <file>menuWhiteColor24Px.png</file>
+    <file>settingsWhiteColor24Px.png</file>
+    <file>userWhiteColor24Px.png</file>
+  </qresource>
+</RCC>
