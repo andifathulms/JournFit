@@ -3,8 +3,11 @@ from PyQt5.uic import loadUi
 from PyQt5.QtCore import *
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QDesktopWidget, QLabel, QHBoxLayout, QCalendarWidget, QMessageBox
-from sql import *
-from PyQt5.QtGui import QPixmap, QIcon, QTextCharFormat, QFont, QColor
+from PyQt5.QtGui import QPixmap, QIcon, QTextCharFormat, QFont, QColor, QBrush
+from numpy import mean
+from formula import *
+from model import User, Lift
+
 
 #make non-Clickable object on Qt clickable 
 def clickable(widget):
@@ -25,21 +28,30 @@ class loginPage(QMainWindow):
     def __init__(self):
         super(loginPage, self).__init__()
         loadUi("Login2.ui", self)
+
+        self.initUI()
+        self.initConnection()
+
+        print("Login")
+
+    def initUI(self):
+        pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
+        self.Logo.setPixmap(pixmap)
+
+    def initConnection(self):
         self.btnLogin.clicked.connect(self.onClickBtnLogin)
         clickable(self.txtSignUp).connect(self.gotoSignUp)
         clickable(self.txtForget).connect(self.gotoChangePsw)
-        pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
-        self.Logo.setPixmap(pixmap)
-        print("Login")
 
     def onClickBtnLogin(self):
         user = self.txtUsername.text()
         psw = self.txtPassword.text()
-        print(checkLoginValid(user,psw))
-        curUser = ifUser(user)
+        #print(checkLoginValid(user,psw))
+
         if checkLoginValid(user,psw) == 1:
             self.txtMessage.setText("Success")
-            addSession(idFromUser(user))
+            user = User(idFromUser(user))
+            user.addSession()
             self.gotoLiftLog() #change later
         elif checkLoginValid(user,psw) == 0:
             self.txtMessage.setText("Username not found")
@@ -61,36 +73,33 @@ class loginPage(QMainWindow):
         widget.addWidget(changePsw)
         widget.setCurrentWidget(changePsw)
 
-    def showData(self):
-        print("Forget Passsword")
-
 class changePswPage(QMainWindow):
     def __init__(self):
         super(changePswPage, self).__init__()
         loadUi("changePass.ui", self)
-        self.btnLogin.clicked.connect(self.onClickBtnLogin)
-        clickable(self.txtSignUp).connect(self.gotoSignUp)
-        clickable(self.txtLogin).connect(self.gotoLogin)
+
+        self.initUI()
+        self.initConnection()
+        
+        print("Change Password")
+
+    def initUI(self):
         pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
         self.Logo.setPixmap(pixmap)
 
-    def gotoSignUp(self):
-        signUp = signUpPage()
-        widget.addWidget(signUp)
-        widget.setCurrentWidget(signUp)
+    def initConnection(self):
+        self.btnLogin.clicked.connect(self.onClickBtnLogin)
+        clickable(self.txtSignUp).connect(self.gotoSignUp)
+        clickable(self.txtLogin).connect(self.gotoLogin)
 
-    def gotoLogin(self):
-        login = loginPage()
-        widget.addWidget(login)
-        widget.setCurrentWidget(login)
-
-    def onClickBtnLogin(self):
+    def onClickBtnLogin(self): #onClickBtnChangePassword
         user = self.txtUsername.text()
         psw = self.txtPassword.text() 
         rePsw = self.txtRPassword.text()
         msg = self.isValid(user,psw,rePsw)[1]
         if self.isValid(user,psw,rePsw)[0] :
-            changePassword(user,psw)
+            user = User(idFromUser(user))
+            user.changePassword(psw)
             self.gotoLogin()
         else:
             self.txtMessage.setText(msg)
@@ -111,13 +120,33 @@ class changePswPage(QMainWindow):
 
         return [flag,msg]
 
+    def gotoSignUp(self):
+        signUp = signUpPage()
+        widget.addWidget(signUp)
+        widget.setCurrentWidget(signUp)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
 class signUpPage(QMainWindow):
     def __init__(self):
         super(signUpPage, self).__init__()
         loadUi("SignUp2.ui", self)
+        
+        self.initUI()
+        self.initConnection()
+
+        print("SignUp")
+
+    def initUI(self):
+        pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
+        self.Logo.setPixmap(pixmap)
+
+    def initConnection(self):
         self.btnSignUp.clicked.connect(self.addUser)
         clickable(self.txtLogin).connect(self.gotoLogin)
-        print("SignUp")
 
     def addUser(self):
         fullname = self.txtFullname.text()
@@ -139,10 +168,11 @@ class signUpPage(QMainWindow):
         activity = self.cmbActivity.currentIndex()
         isValid = self.validSignUp(fullname,name,email,password,rePassword,gender,date,height,weight,bodyfat,fitExp,activity)
         self.txtMessage.setText(isValid[1])
-        print(isValid)
+        #print(isValid)
         if isValid[0]: 
-            insertUser(fullname,name,email,password,gender,date,height,weight,bodyfat,fitExp,activity)
-            addSession(idFromUser(name))
+            user = User(fullname,name,email,password,gender,date,height,weight,bodyfat,fitExp,activity)
+            user.insertUser()
+            user.addSession()
             self.gotoLiftLog()
 
     def validSignUp(self, fullname,name,email,password,rePassword,gender,date,height,weight,bodyfat,fitExp,activity):
@@ -192,27 +222,18 @@ class liftLogPage(QMainWindow):
     def __init__(self):
         super(liftLogPage, self).__init__()
         loadUi("LiftLog.ui", self)
+
+        self.initUI()
         self.initNav()
-        self.initDate()
+        self.initCalendar()
+        self.initConnection()
 
-        self.btnSubmitE1.clicked.connect(self.onClickBtnE1)
-        self.btnSubmitE2.clicked.connect(self.onClickBtnE2)
-        self.btnSubmitE3.clicked.connect(self.onClickBtnE3)
-        self.btnSubmitE4.clicked.connect(self.onClickBtnE4)
-        self.btnSubmitE5.clicked.connect(self.onClickBtnE5)
-        self.btnSubmitE6.clicked.connect(self.onClickBtnE6)
-        self.btnToggle.clicked.connect(self.slideToRight)
-        self.btnToggleEdit.clicked.connect(self.onClickToggleEdit)
         self.toggleEdit = 0
+        
+        print("Lift Log")
 
-        self.calendarWidget.setMinimumDate(QDate.fromString(returnMinDate(getLastSession()), "yyyy-MM-dd"))
-        #self.calendarWidget.setGridVisible(True)
-        self.calendarWidget.setFirstDayOfWeek(Qt.Sunday)
-        self.calendarWidget.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
-        self.calendarWidget.setHorizontalHeaderFormat(QCalendarWidget.ShortDayNames)
-        self.calendarWidget.clicked.connect(self.onClickCalendar)
+    def initUI(self):
         self.cmbExcercise1.clear()
-
         exc = listOfExcercise()
         self.cmbExcercise1.addItems(exc)
         self.cmbExcercise2.addItems(exc)
@@ -221,17 +242,39 @@ class liftLogPage(QMainWindow):
         self.cmbExcercise5.addItems(exc)
         self.cmbExcercise6.addItems(exc)
         self.clearView()
-        
-        print("Lift Log")
 
-    def initDate(self):
+    def initConnection(self):
+        self.btnSubmitE1.clicked.connect(self.onClickBtnE1)
+        self.btnSubmitE2.clicked.connect(self.onClickBtnE2)
+        self.btnSubmitE3.clicked.connect(self.onClickBtnE3)
+        self.btnSubmitE4.clicked.connect(self.onClickBtnE4)
+        self.btnSubmitE5.clicked.connect(self.onClickBtnE5)
+        self.btnSubmitE6.clicked.connect(self.onClickBtnE6)
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToggleEdit.clicked.connect(self.onClickToggleEdit)
+
+    def initCalendar(self):
+        format1 = QTextCharFormat()
+        format2 = QTextCharFormat()
+        format1.setBackground(QColor.fromRgb(0,0,255))
+        format2.setForeground(QBrush(QColor("Black"),Qt.SolidPattern))
+        self.calendarWidget.setMinimumDate(QDate.fromString(returnMinDate(getLastSession()), "yyyy-MM-dd"))
+        #self.calendarWidget.setGridVisible(True)
+        self.calendarWidget.setFirstDayOfWeek(Qt.Sunday)
+        self.calendarWidget.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
+        self.calendarWidget.setHorizontalHeaderFormat(QCalendarWidget.ShortDayNames)
+        self.calendarWidget.clicked.connect(self.onClickCalendar)
+        #self.calendarWidget.setHeaderTextFormat(format1)
+        self.calendarWidget.setWeekdayTextFormat(Qt.Saturday,format2)
+        self.calendarWidget.setWeekdayTextFormat(Qt.Sunday,format2)
         for date in self.qtDateFromString():
             #date = QDate(2021,4,1)
             format = QTextCharFormat()
-            format.setFont(QFont('Times', 12))
+            #format.setFont(QFont('Times',8))
             format.setFontUnderline(True)
             format.setFontWeight(10)
             format.setUnderlineColor(QColor.fromRgb(0,0,0,50))
+            format.setBackground(QColor.fromRgb(136,216,199))
             self.calendarWidget.setDateTextFormat(date,format)
             #print(self.qtDateFromString())
 
@@ -256,6 +299,7 @@ class liftLogPage(QMainWindow):
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
 
+        self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
@@ -265,6 +309,15 @@ class liftLogPage(QMainWindow):
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnMuscleStats.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+
         #connection
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftStats.clicked.connect(self.gotoLiftStats)
@@ -272,41 +325,27 @@ class liftLogPage(QMainWindow):
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
         self.btnAccount.clicked.connect(self.gotoLogin)
 
-    def gotoTDEE(self):
-        tdee = tdeePage()
-        widget.addWidget(tdee)
-        widget.setCurrentWidget(tdee)
-
-    def gotoLiftStats(self):
-        liftstats = liftStatsPage()
-        widget.addWidget(liftstats)
-        widget.setCurrentWidget(liftstats)
-
-    def gotoLiftRecord(self):
-        liftrecord = liftRecordPage()
-        widget.addWidget(liftrecord)
-        widget.setCurrentWidget(liftrecord)
-
-    def gotoStrengthStandard(self):
-        strengthSt = strengthStandardPage()
-        widget.addWidget(strengthSt)
-        widget.setCurrentWidget(strengthSt)
-
-    def gotoLogin(self):
-        login = loginPage()
-        widget.addWidget(login)
-        widget.setCurrentWidget(login)
-
-    def qtDateFromString(self):
-        dateList = returnDateLogin(getLastSession())
-        qtDate = [QDate.fromString(d, "yyyy-MM-dd") for d in dateList]
-        return qtDate
-
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnMuscleStats.setText("Muscle Stats")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
             newWidth = 225
         else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnMuscleStats.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -316,10 +355,17 @@ class liftLogPage(QMainWindow):
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
 
+    def qtDateFromString(self):
+        dateList = returnDateLogin(getLastSession())
+        qtDate = [QDate.fromString(d, "yyyy-MM-dd") for d in dateList]
+        return qtDate
+
     def onClickCalendar(self):
         btnList = [self.btnSubmitE1,self.btnSubmitE2,self.btnSubmitE3,self.btnSubmitE4,self.btnSubmitE5,self.btnSubmitE6]
         date = self.calendarWidget.selectedDate()
-        result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
+        user = User(getLastSession())
+        result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+        #result = showRecordOn(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
         self.clearView()
         self.writeToTable(result)
         self.btnToggleEdit.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
@@ -337,7 +383,7 @@ class liftLogPage(QMainWindow):
 
         if QDate.currentDate().daysTo(date) == 0 : 
             self.btnToggleEdit.setEnabled(True)
-    
+
     def onClickToggleEdit(self):
         btnList = [self.btnSubmitE1,self.btnSubmitE2,self.btnSubmitE3,self.btnSubmitE4,self.btnSubmitE5,self.btnSubmitE6]
         if self.toggleEdit % 3 == 0:
@@ -364,15 +410,6 @@ class liftLogPage(QMainWindow):
 
         self.toggleEdit += 1
         print(self.toggleEdit)
-
-    def showPopUp(self,message):
-        msg = QMessageBox()
-        msg.setWindowTitle("JournFit")
-        msg.setText(message)
-        msg.Icon(QMessageBox.Information)
-        msg.StandardButton(QMessageBox.Ok|QMessageBox.Open)
-        msg.setStyleSheet("QLabel{font-size: 20px; text-align: center;} QPushButton{ width:75px; font-size: 10px; }");
-        x = msg.exec_()
 
     def onClickBtnE1(self):
         firstRow = [self.txtWeightE1S1, self.txtWeightE1S2, self.txtWeightE1S3, self.txtWeightE1S4, self.txtWeightE1S5, self.txtWeightE1S6]
@@ -402,7 +439,6 @@ class liftLogPage(QMainWindow):
                     self.deleteRow(1,getLastSession())
                     self.showPopUp("Success delete data on row 1")
                 except: pass
-        self.initDate()
     
     def onClickBtnE2(self):
         secondRow = [self.txtWeightE2S1, self.txtWeightE2S2, self.txtWeightE2S3,self.txtWeightE2S4, self.txtWeightE2S5, self.txtWeightE2S6]
@@ -549,6 +585,15 @@ class liftLogPage(QMainWindow):
                     self.showPopUp("Success delete data on row 6")
                 except: pass
 
+    def showPopUp(self,message):
+        msg = QMessageBox()
+        msg.setWindowTitle("JournFit")
+        msg.setText(message)
+        msg.Icon(QMessageBox.Information)
+        msg.StandardButton(QMessageBox.Ok|QMessageBox.Open)
+        msg.setStyleSheet("QLabel{font-size: 20px; text-align: center;} QPushButton{ width:75px; font-size: 10px; }");
+        x = msg.exec_()
+
     def returnRowData(self, row, user_id):
         row1 = [self.cmbExcercise1, self.txtWeightE1S1, self.spinBoxE1S1, self.hiddenE1S1, self.txtWeightE1S2, self.spinBoxE1S2, self.hiddenE1S2,
                 self.txtWeightE1S3, self.spinBoxE1S3, self.hiddenE1S3, self.txtWeightE1S4, self.spinBoxE1S4, self.hiddenE1S4,
@@ -595,7 +640,8 @@ class liftLogPage(QMainWindow):
     def submitRow(self, row, user_id):
         rowMaster = self.returnRowData(row, user_id)
         for row in rowMaster:
-            addLift(row[0], row[1], row[2], row[3], row[4], row[5])
+            lift = Lift(row[0], row[1], row[2], row[3], row[4], row[5])
+            lift.addLift()
         print(rowMaster)
 
     def submitDateRow(self, row, user_id):
@@ -606,9 +652,8 @@ class liftLogPage(QMainWindow):
         for row in rowMaster:
             print(row)
             try:
-                print("Try")
-                addLiftWithDate(row[0], row[1], selDate, row[2], row[3], row[4], row[5])
-                print("Func")
+                lift = Lift(row[0], row[1], selDate, row[2], row[3], row[4], row[5])
+                lift.addLift()
             except Exception as ex:
                 msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
                 print(msg)
@@ -618,29 +663,35 @@ class liftLogPage(QMainWindow):
         rowMaster = self.returnRowData(row, user_id)
         for row in rowMaster:
             try:
-                updateLift(row[6], row[1], row[2], row[3], row[4], row[5])
+                lift = Lift(row[6])
+                lift.updateLift(row[1], row[2], row[3], row[4], row[5])
             except Exception as ex:
                 msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
                 print(msg)
 
         date = self.calendarWidget.selectedDate()        
-        result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
+        user = User(getLastSession())
+        result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+        #result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
         self.clearView()
         self.writeToTable(result)
-        #print(rowMaster)
 
     def deleteRow(self, row, user_id):
         rowMaster = self.returnRowData(row, user_id)
         for row in rowMaster:
             try:
-                deleteLift(row[6])
+                lift = Lift(row[6])
+                lift.deleteLift()
+                #deleteLift(row[6])
                 #print(row[6])
             except Exception as ex:
                 msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
                 print(msg)
         
-        date = self.calendarWidget.selectedDate()        
-        result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
+        date = self.calendarWidget.selectedDate()
+        user = User(getLastSession())
+        result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')        
+        #result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
         self.clearView()
         self.writeToTable(result)
         #print(rowMaster)
@@ -674,6 +725,31 @@ class liftLogPage(QMainWindow):
         for hd in firstHidden + secondHidden + thirdHidden + fourthHidden + fifthHidden + sixthHidden:
             hd.setText("-")
 
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
     def writeToTable(self, result):
         cmbExcList = [self.cmbExcercise1,self.cmbExcercise2,self.cmbExcercise3,self.cmbExcercise4,self.cmbExcercise5,self.cmbExcercise6]
         firstRow = [self.txtWeightE1S1, self.txtWeightE1S2, self.txtWeightE1S3, self.txtWeightE1S4, self.txtWeightE1S5, self.txtWeightE1S6]
@@ -790,8 +866,122 @@ class tdeePage(QMainWindow):
     def __init__(self):
         super(tdeePage, self).__init__()
         loadUi("TDEE.ui", self)
-        self.btnToggle.clicked.connect(self.slideToRight)
+        
         self.initNav()
+        self.initConnection()
+        self.initHeader()
+        self.initTDEE()
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnRecalculate.clicked.connect(self.initTDEE)
+
+    def initHeader(self):
+        user = User(getLastSession())
+        self.labelInitial.setText(f'{user.name}, {user.age}y/o {user.gender} who is ')
+        self.txtHeight.setText(str(user.height))
+        self.txtWeight.setText(str(user.weight))
+        self.cmbActivity.setCurrentIndex(user.activity-1)
+        self.txtBF.setText(str(user.bodyfat))
+
+    def initTDEE(self):
+        user = User(getLastSession())
+        tdee = tdeeCalc(user.gender, int(self.txtHeight.text()), int(self.txtWeight.text()), 
+            int(self.txtBF.text()), int(self.cmbActivity.currentIndex())+1)
+        self.txtCalpday.setText(str(tdee[0]))
+        self.txtCalpwk.setText(str(tdee[0]*7))
+
+        text = f"Based on your stats, the best estimate for your maintenance calories is {str(tdee[0])} calories per day based on the Katch-McArdle Formula, which is widely known to be the most accurate when body fat is provided. The table below shows the difference if you were to have selected a different activity level."
+        self.tdeeExp.setText(text)
+
+        txtTdee = [self.txtBMRCal, self.txtSedCal, self.txtLexCal, self.txtMexCal, self.txtHexCal, self.txtAthCal]
+        txtText = [self.txt1, self.txt2, self.txt3, self.txt4, self.txt5, self.txt6]
+        txtCpd = [self.cpd1, self.cpd2, self.cpd3, self.cpd4, self.cpd5, self.cpd6]
+        bmiLabel = [self.bmi1, self.bmi2, self.bmi3, self.bmi4, self.bmi5, self.bmi6, self.bmi7, self.bmi8]
+        font = QFont()
+        font.setBold(False)
+        for idx,txt in enumerate(txtTdee):
+            txt.setText(str(tdee[1][idx]))
+            txt.setFont(font)
+        for txt in txtText + txtCpd:
+            txt.setFont(font)
+        for bmi in bmiLabel:
+            bmi.setFont(font)
+
+        font.setBold(True)
+        txtTdee[self.cmbActivity.currentIndex()+1].setFont(font)
+        txtText[self.cmbActivity.currentIndex()+1].setFont(font)
+        txtCpd[self.cmbActivity.currentIndex()+1].setFont(font)
+
+        self.widgetMacros.setStyleSheet('QTabBar{background-color: rgb(3, 114, 188); color: rgb(0, 0, 0)}')
+
+        maintenance = [self.txtMainModP, self.txtMainModF, self.txtMainModC, self.txtMainLowP, self.txtMainLowF, self.txtMainLowC, 
+                       self.txtMainHigP, self.txtMainHigF, self.txtMainHigC]
+        cutting = [self.txtCutModP, self.txtCutModF, self.txtCutModC, self.txtCutLowP, self.txtCutLowF, self.txtCutLowC, 
+                   self.txtCutHigP, self.txtCutHigF, self.txtCutHigC]
+        bulking = [self.txtBulkModP, self.txtBulkModF, self.txtBulkModC, self.txtBulkLowP, self.txtBulkLowF, self.txtBulkLowC, 
+                   self.txtBulkHigP, self.txtBulkHigF, self.txtBulkHigC]
+
+        maint = macrosMaintenance(int(self.txtCalpday.text()))
+        cut = macrosCutting(int(self.txtCalpday.text()))
+        bulk = macrosBulking(int(self.txtCalpday.text()))
+        maintList = maint[0] + maint[1] + maint[2]
+        cutList = cut[0] + cut[1] + cut[2]
+        bulkList = bulk[0] + bulk[1] + bulk[2]
+
+        for idx,m in enumerate(maintenance):
+            m.setText(f'{maintList[idx]}g')
+
+        for idx,c in enumerate(cutting):
+            c.setText(f'{cutList[idx]}g')
+
+        for idx,b in enumerate(bulking):
+            b.setText(f'{bulkList[idx]}g')
+
+        #bmi
+
+        bmi = bmiScore(int(self.txtWeight.text()),int(self.txtHeight.text()))
+        self.txtBMI.setText(f'BMI Score : {bmi[0]}')
+        text = f"Your BMI is {bmi[0]}, which means you are classified as {bmi[1]}. <b>The BMI Index did not account the bodyfat so you maybe muscular enough to be listed as overweight...</b>"
+        self.txtBMILabel.setText(text)
+
+        if bmi[0] <= 18.5 :
+            self.bmi1.setFont(font)
+            self.bmi5.setFont(font)
+        elif bmi[0] <= 24.99 :
+            self.bmi2.setFont(font)
+            self.bmi6.setFont(font)
+        elif bmi[0] <= 29.99 :
+            self.bmi3.setFont(font)
+            self.bmi7.setFont(font)
+        else :
+            self.bmi4.setFont(font)
+            self.bmi8.setFont(font)
+
+        #ideal bodyweight
+
+        mmp = maxMP(int(self.txtHeight.text()))
+        self.txtMMP5.setText(f'{mmp[0]} kg at 5.5% bodyfat')
+        self.txtMMP8.setText(f'{mmp[1]} kg at 8% bodyfat')
+        self.txtMMP10.setText(f'{mmp[2]} kg at 10% bodyfat')
+        self.txtMMP12.setText(f'{mmp[3]} kg at 12% bodyfat')
+        self.txtMMP15.setText(f'{mmp[4]} kg at 15% bodyfat')
+
+        pw = powerliftingWeight(int(self.txtHeight.text()), user.gender)
+        self.txtPL1.setText(f'{pw[0]} (Most Federation)')
+        self.txtPL2.setText(f'{pw[1]} (IPF)')
+
+        oly = olyWeight(int(self.txtHeight.text()), user.gender)
+        self.txtOLY.setText(f'{oly[0]} (Olympic Standard)')
+        self.txtIWF.setText(f'{oly[1]} (IWF)')
+
+        bb = bodybuildingWeight(int(self.txtHeight.text()))
+        if(user.gender == "Male"):
+            self.txtCBD.setText(f'{bb[0]} (Classic Bodybuilding Division)')
+            self.txtCPH.setText(f'{bb[1]} (Classic Physic Division)')
+        else:
+            self.txtCBD.setText(f'{bb[0]-20} (Classic Bodybuilding Division)')
+            self.txtCPH.setText(f'{bb[1]-20} (Classic Physic Division)')
 
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
@@ -814,6 +1004,7 @@ class tdeePage(QMainWindow):
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
 
+        self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
@@ -822,6 +1013,15 @@ class tdeePage(QMainWindow):
         self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnMuscleStats.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
 
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
@@ -832,8 +1032,24 @@ class tdeePage(QMainWindow):
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnMuscleStats.setText("Muscle Stats")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
             newWidth = 225
         else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnMuscleStats.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -867,8 +1083,13 @@ class liftStatsPage(QMainWindow):
     def __init__(self):
         super(liftStatsPage, self).__init__()
         loadUi("liftStats.ui", self)
+
         self.btnToggle.clicked.connect(self.slideToRight)
         self.initNav()
+        self.writeData()
+        #clear view and try except the func
+
+        print("Lift Stats")
 
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
@@ -891,6 +1112,7 @@ class liftStatsPage(QMainWindow):
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
 
+        self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
@@ -900,17 +1122,218 @@ class liftStatsPage(QMainWindow):
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnMuscleStats.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
 
+    def writeData(self): #update the func query later
+        user = User(getLastSession())
+        id = user.userID
+        bsERP = findBestLiftOf("BS",id)
+        fsERP = findBestLiftOf("FS",id) 
+        dlERP = findBestLiftOf("DL",id) 
+        sdlERP = findBestLiftOf("SDL",id) 
+        bpERP = findBestLiftOf("BP",id) 
+        ibpERP = findBestLiftOf("IBP",id) 
+        dipERP = findBestLiftBWOf("DIP",user.weight,id) 
+        ohpERP = findBestLiftOf("OHP",id) 
+        cuERP = findBestLiftBWOf("CU",user.weight,id) 
+        puERP = findBestLiftBWOf("PU",user.weight,id) 
+        prERP = findBestLiftOf("PR",id)
+        plTotal = bsERP[1] + dlERP[1] + bpERP[1]
+        wilks = wilksFactor(user.weight)
+        try:
+            wilkScore = wilks[0]*plTotal #change later to gender based
+        except:
+            wilkScore = ""
+
+        bs = getStatusOfLift("Back Squat",bsERP[1],user.weight)
+        fs = getStatusOfLift("Front Squat",fsERP[1],user.weight)
+        dl = getStatusOfLift("Deadlift",dlERP[1],user.weight)
+        sdl = getStatusOfLift("Sumo Deadlift",sdlERP[1],user.weight)
+        bp = getStatusOfLift("Bench Press",bpERP[1],user.weight)
+        ibp = getStatusOfLift("Incline Bench Press",ibpERP[1],user.weight)
+        dip = getStatusOfLiftBW("Dip",dipERP[1],user.weight)
+        ohp = getStatusOfLift("Overhead Press",ohpERP[1],user.weight)
+        cu = getStatusOfLiftBW("Chin-up",cuERP[1],user.weight)
+        pu = getStatusOfLiftBW("Pull-up",puERP[1],user.weight)
+        pr = getStatusOfLift("Pendlay Row",prERP[1],user.weight)
+
+        self.txtBS_ERP.setText(str(bsERP[1]) + " kg")
+        self.txtFS_ERP.setText(str(fsERP[1]) + " kg")
+        self.txtDL_ERP.setText(str(dlERP[1]) + " kg")
+        self.txtSDL_ERP.setText(str(sdlERP[1]) + " kg")
+        self.txtBP_ERP.setText(str(bpERP[1]) + " kg")
+        self.txtIBP_ERP.setText(str(ibpERP[1]) + " kg")
+        self.txtDIP_ERP.setText("+" + str(dipERP[1]) + " kg")
+        self.txtOHP_ERP.setText(str(ohpERP[1]) + " kg")
+        self.txtCU_ERP.setText("+" + str(cuERP[1]) + " kg")
+        self.txtPU_ERP.setText("+" + str(puERP[1]) + " kg")
+        self.txtPR_ERP.setText(str(prERP[1]) + " kg")
+
+        self.txtBS_Score.setText(str(round(bs[3],1)))
+        self.txtFS_Score.setText(str(round(fs[3],1)))
+        self.txtDL_Score.setText(str(round(dl[3],1)))
+        self.txtSDL_Score.setText(str(round(sdl[3],1)))
+        self.txtBP_Score.setText(str(round(bp[3],1)))
+        self.txtIBP_Score.setText(str(round(ibp[3],1)))
+        self.txtDIP_Score.setText(str(round(dip[3],1)))
+        self.txtOHP_Score.setText(str(round(ohp[3],1)))
+        self.txtCU_Score.setText(str(round(cu[3],1)))
+        self.txtPU_Score.setText(str(round(pu[3],1)))
+        self.txtPR_Score.setText(str(round(pr[3],1)))
+
+        self.txtBS_Status.setText(str(bs[0]))
+        self.txtFS_Status.setText(str(fs[0]))
+        self.txtDL_Status.setText(str(dl[0]))
+        self.txtSDL_Status.setText(str(sdl[0]))
+        self.txtBP_Status.setText(str(bp[0]))
+        self.txtIBP_Status.setText(str(ibp[0]))
+        self.txtDIP_Status.setText(str(dip[0]))
+        self.txtOHP_Status.setText(str(ohp[0]))
+        self.txtCU_Status.setText(str(cu[0]))
+        self.txtPU_Status.setText(str(pu[0]))
+        self.txtPR_Status.setText(str(pr[0]))
+
+        self.txtBS_Current.setText(str(bs[0]))
+        self.txtFS_Current.setText(str(fs[0]))
+        self.txtDL_Current.setText(str(dl[0]))
+        self.txtSDL_Current.setText(str(sdl[0]))
+        self.txtBP_Current.setText(str(bp[0]))
+        self.txtIBP_Current.setText(str(ibp[0]))
+        self.txtDIP_Current.setText(str(dip[0]))
+        self.txtOHP_Current.setText(str(ohp[0]))
+        self.txtCU_Current.setText(str(cu[0]))
+        self.txtPU_Current.setText(str(pu[0]))
+        self.txtPR_Current.setText(str(pr[0]))
+
+        self.txtBS_Next.setText(str(bs[1]))
+        self.txtFS_Next.setText(str(fs[1]))
+        self.txtDL_Next.setText(str(dl[1]))
+        self.txtSDL_Next.setText(str(sdl[1]))
+        self.txtBP_Next.setText(str(bp[1]))
+        self.txtIBP_Next.setText(str(ibp[1]))
+        self.txtDIP_Next.setText(str(dip[1]))
+        self.txtOHP_Next.setText(str(ohp[1]))
+        self.txtCU_Next.setText(str(cu[1]))
+        self.txtPU_Next.setText(str(pu[1]))
+        self.txtPR_Next.setText(str(pr[1]))
+
+        self.progressBarBS.setValue(bs[2])
+        self.progressBarFS.setValue(fs[2])
+        self.progressBarDL.setValue(dl[2])
+        self.progressBarSDL.setValue(sdl[2])
+        self.progressBarBP.setValue(bp[2])
+        self.progressBarIBP.setValue(ibp[2])
+        self.progressBarDIP.setValue(dip[2])
+        self.progressBarOHP.setValue(ohp[2])
+        self.progressBarCU.setValue(cu[2])
+        self.progressBarPU.setValue(pu[2])
+        self.progressBarPR.setValue(pr[2])
+
+        if bs[3] == 0 or fs[3] == 0 :
+            squatScore = bs[3] + fs[3]
+        else :
+            squatScore = mean([bs[3],fs[3]])
+
+        horprsScore = mean([bp[3],ibp[3],dip[3]])
+        verprsScore = ohp[3]
+        floorplScore = mean([dl[3],sdl[3]])
+        purowScore = mean([cu[3],pu[3],pr[3]])
+
+        squatStatus = self.getStatus(squatScore)
+        floorplStatus = self.getStatus(floorplScore)
+        horprsStatus = self.getStatus(horprsScore)
+        verprsStatus = self.getStatus(verprsScore)
+        purowStatus = self.getStatus(purowScore)
+
+        self.txtSquatScore.setText(str(round(squatScore,1)))
+        self.txtHorizontalPressScore.setText(str(round(horprsScore,1)))
+        self.txtVerticalPressScore.setText(str(round(verprsScore,1)))
+        self.txtFloorPullScore.setText(str(round(floorplScore,1)))
+        self.txtPullUpRowScore.setText(str(round(purowScore,1)))
+
+        self.txtSquatStatus.setText(squatStatus)
+        self.txtHorizontalPressStatus.setText(horprsStatus)
+        self.txtVerticalPressStatus.setText(verprsStatus)
+        self.txtFloorPullStatus.setText(floorplStatus)
+        self.txtPullUpRowStatus.setText(purowStatus)
+
+        overallScore = mean([squatScore,horprsScore,verprsScore,floorplScore,purowScore])
+        overallStatus = self.getStatus(overallScore)
+
+        self.txtOverallScore.setText(str(round(overallScore,1)))
+        self.txtOverallStatus.setText(overallStatus)
+        try:
+            self.txtEstimatedPLTotal.setText(str(round(plTotal,1)))
+        except:
+            self.txtEstimatedPLTotal.setText(str(0))
+        try:
+            self.txtWilksScore.setText(str(int(wilkScore)))
+        except:
+            self.txtWilksScore.setText(str(0))
+
+        #scoreList = [bsERP[1],fsERP[1],dlERP[1],sdlERP[1],bpERP[1],ibpERP[1],dipERP[1],ohpERP[1],cuERP[1],puERP[1],prERP[1]]
+        scoreList = [bs[3],fs[3],dl[3],sdl[3],bp[3],ibp[3],dip[3],ohp[3],cu[3],pu[3],pr[3]]
+        excList = ["Back Squat", "Front Squat", "Deadlift", "Sumo Deadlift", "Bench Press", "Incline Bench Press", "Dip", 
+                   "Overhead Press", "Chin Up", "Pull Up", "Pendlay Row"]
+
+        minIndex = min(range(len(scoreList)), key=scoreList.__getitem__)
+        maxIndex = max(range(len(scoreList)), key=scoreList.__getitem__)
+        minExc = excList[minIndex]
+        maxExc = excList[maxIndex]
+
+        if overallScore != 0:
+            self.txtStrongestLift.setText(maxExc)
+            self.txtWeakestLift.setText(minExc)
+        else:
+            self.txtStrongestLift.setText("")
+            self.txtWeakestLift.setText("")
+
+
+    def getStatus(self,score):
+        if score >= 125 : return "World Class"
+        elif score >= 110 : return "Elite"
+        elif score >= 100 : return "Exceptional"
+        elif score >= 87.5 : return "Advanced"
+        elif score >= 75 : return "Proficient"
+        elif score >= 60 : return "Intermediate"
+        elif score >= 45 : return "Novice"
+        elif score >= 30 : return "Untrained"
+        return "Subpar"
+
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnMuscleStats.setText("Muscle Stats")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
             newWidth = 225
         else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnMuscleStats.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -946,6 +1369,7 @@ class liftRecordPage(QMainWindow):
         loadUi("liftRecord.ui", self)
         self.btnToggle.clicked.connect(self.slideToRight)
         self.initNav()
+        self.writeData()
 
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
@@ -968,6 +1392,7 @@ class liftRecordPage(QMainWindow):
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
 
+        self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
@@ -977,17 +1402,134 @@ class liftRecordPage(QMainWindow):
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnMuscleStats.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftStats.clicked.connect(self.gotoLiftStats)
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
 
+    def writeData(self):
+        user = User(getLastSession())
+        id = user.userID
+        bsERP = findBestLiftOf("BS",id)
+        fsERP = findBestLiftOf("FS",id) 
+        dlERP = findBestLiftOf("DL",id) 
+        sdlERP = findBestLiftOf("SDL",id) 
+        bpERP = findBestLiftOf("BP",id) 
+        ibpERP = findBestLiftOf("IBP",id) 
+        ohpERP = findBestLiftOf("OHP",id) 
+
+        bs = getStatusOfLift("Back Squat",bsERP[1],user.weight)
+        fs = getStatusOfLift("Front Squat",fsERP[1],user.weight)
+        dl = getStatusOfLift("Deadlift",dlERP[1],user.weight)
+        sdl = getStatusOfLift("Sumo Deadlift",sdlERP[1],user.weight)
+        bp = getStatusOfLift("Bench Press",bpERP[1],user.weight)
+        ibp = getStatusOfLift("Incline Bench Press",ibpERP[1],user.weight)
+        ohp = getStatusOfLift("Overhead Press",ohpERP[1],user.weight)
+
+        self.txtBS_Status.setText(str(bs[0]))
+        self.txtFS_Status.setText(str(fs[0]))
+        self.txtDL_Status.setText(str(dl[0]))
+        self.txtSDL_Status.setText(str(sdl[0]))
+        self.txtBP_Status.setText(str(bp[0]))
+        self.txtIBP_Status.setText(str(ibp[0]))
+        self.txtOHP_Status.setText(str(ohp[0]))
+
+        self.txtBS_ERP.setText(str(bsERP[1]) + " kg")
+        self.txtFS_ERP.setText(str(fsERP[1]) + " kg")
+        self.txtDL_ERP.setText(str(dlERP[1]) + " kg")
+        self.txtSDL_ERP.setText(str(sdlERP[1]) + " kg")
+        self.txtBP_ERP.setText(str(bpERP[1]) + " kg")
+        self.txtIBP_ERP.setText(str(ibpERP[1]) + " kg")
+        self.txtOHP_ERP.setText(str(ohpERP[1]) + " kg")
+
+        try: 
+            self.txtBS_WR.setText(f'{int(bsERP[2])} x {bsERP[3]}')
+            self.txtBS_Date.setText(bsERP[0].strftime('%Y-%m-%d'))
+            self.txtBS_Days.setText(f'{QDate.fromString(bsERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtBS_WR.setText(f'{bsERP[2]} x {bsERP[3]}')
+            self.txtBS_Date.setText(bsERP[0])
+            self.txtBS_Days.setText(bsERP[0])
+        try:
+            self.txtFS_WR.setText(f'{int(fsERP[2])} x {fsERP[3]}')
+            self.txtFS_Date.setText(fsERP[0].strftime('%Y-%m-%d'))
+            self.txtFS_Days.setText(f'{QDate.fromString(fsERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtFS_WR.setText(f'{fsERP[2]} x {fsERP[3]}')
+            self.txtFS_Date.setText(fsERP[0])
+            self.txtFS_Days.setText(fsERP[0])
+        try:
+            self.txtDL_WR.setText(f'{int(dlERP[2])} x {dlERP[3]}')
+            self.txtDL_Date.setText(dlERP[0].strftime('%Y-%m-%d'))
+            self.txtDL_Days.setText(f'{QDate.fromString(dlERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtDL_WR.setText(f'{dlERP[2]} x {dlERP[3]}')
+            self.txtDL_Date.setText(dlERP[0])
+            self.txtDL_Days.setText(dlERP[0])
+        try:
+            self.txtSDL_WR.setText(f'{int(sdlERP[2])} x {sdlERP[3]}')
+            self.txtSDL_Date.setText(sdlERP[0].strftime('%Y-%m-%d'))
+            self.txtSDL_Days.setText(f'{QDate.fromString(sdlERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtSDL_WR.setText(f'{sdlERP[2]} x {sdlERP[3]}')
+            self.txtSDL_Date.setText(sdlERP[0])
+            self.txtSDL_Days.setText(sdlERP[0])
+        try:
+            self.txtBP_WR.setText(f'{int(bpERP[2])} x {bpERP[3]}')
+            self.txtBP_Date.setText(bpERP[0].strftime('%Y-%m-%d'))
+            self.txtBP_Days.setText(f'{QDate.fromString(bpERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtBP_WR.setText(f'{bpERP[2]} x {bpERP[3]}')
+            self.txtBP_Date.setText(bpERP[0])
+            self.txtBP_Days.setText(bpERP[0])
+        try:
+            self.txtIBP_WR.setText(f'{int(ibpERP[2])} x {ibpERP[3]}')
+            self.txtIBP_Date.setText(ibpERP[0].strftime('%Y-%m-%d'))
+            self.txtIBP_Days.setText(f'{QDate.fromString(ibpERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtIBP_WR.setText(f'{ibpERP[2]} x {ibpERP[3]}')
+            self.txtIBP_Date.setText(ibpERP[0])
+            self.txtIBP_Days.setText(ibpERP[0])
+        try:
+            self.txtOHP_WR.setText(f'{int(ohpERP[2])} x {ohpERP[3]}')
+            self.txtOHP_Date.setText(ohpERP[0].strftime('%Y-%m-%d'))
+            self.txtOHP_Days.setText(f'{QDate.fromString(ohpERP[0].strftime("%Y-%m-%d"), "yyyy-MM-dd").daysTo(QDate.currentDate())} days ago')
+        except:
+            self.txtOHP_WR.setText(f'{ohpERP[2]} x {ohpERP[3]}')
+            self.txtOHP_Date.setText(ohpERP[0])
+            self.txtOHP_Days.setText(ohpERP[0])
+
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnMuscleStats.setText("Muscle Stats")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
             newWidth = 225
         else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnMuscleStats.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -1045,6 +1587,7 @@ class strengthStandardPage(QMainWindow):
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
 
+        self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
@@ -1053,6 +1596,15 @@ class strengthStandardPage(QMainWindow):
         self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnMuscleStats.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
 
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
@@ -1063,8 +1615,24 @@ class strengthStandardPage(QMainWindow):
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnMuscleStats.setText("Muscle Stats")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
             newWidth = 225
         else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnMuscleStats.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
