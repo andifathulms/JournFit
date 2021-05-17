@@ -140,6 +140,64 @@ background-color: rgb(4, 155, 255);
            <bool>true</bool>
           </property>
          </widget>
+         <widget class="QLabel" name="profileFoto">
+          <property name="geometry">
+           <rect>
+            <x>1149</x>
+            <y>20</y>
+            <width>51</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>51</width>
+            <height>51</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>51</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>:/ButtonIcon/Downloads/Icon Warna/user.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="profileName">
+          <property name="geometry">
+           <rect>
+            <x>1220</x>
+            <y>20</y>
+            <width>181</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Century Gothic</family>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Andi Fathul</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -650,55 +708,6 @@ background-position : center left;
               <number>0</number>
              </property>
             </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnNav4">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Century Gothic</family>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">*{
-	background-image: url(:/ButtonIcon/settingsWhiteColor24Px.png);
-padding : 20px 5px;
-background-repeat : none;
-padding-left : 50px;
-border:none;
-	color: rgb(255, 255, 255);
-	background-color: rgb(3, 114, 188);
-border-radius : 10px;
-background-position : center left;
-}
-*:hover{
-background-color: rgb(4, 155, 255);
-}</string>
-            </property>
-            <property name="text">
-             <string>Settings</string>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
            </widget>
           </item>
          </layout>

@@ -140,6 +140,64 @@ background-color: rgb(4, 155, 255);
            <bool>true</bool>
           </property>
          </widget>
+         <widget class="QLabel" name="profileFoto">
+          <property name="geometry">
+           <rect>
+            <x>1149</x>
+            <y>20</y>
+            <width>51</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>51</width>
+            <height>51</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>51</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>:/ButtonIcon/Downloads/Icon Warna/user.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="profileName">
+          <property name="geometry">
+           <rect>
+            <x>1220</x>
+            <y>20</y>
+            <width>181</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Century Gothic</family>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Andi Fathul</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -148,7 +206,8 @@ background-color: rgb(4, 155, 255);
     <item>
      <widget class="QFrame" name="Body">
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(17, 140, 255);</string>
+       <string notr="true">background-color: rgb(17, 140, 255);
+background-color: rgb(3, 114, 188);</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -652,55 +711,6 @@ background-position : center left;
             </layout>
            </widget>
           </item>
-          <item>
-           <widget class="QPushButton" name="btnNav4">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Century Gothic</family>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">*{
-	background-image: url(:/ButtonIcon/settingsWhiteColor24Px.png);
-padding : 20px 5px;
-background-repeat : none;
-padding-left : 50px;
-border:none;
-	color: rgb(255, 255, 255);
-	background-color: rgb(3, 114, 188);
-border-radius : 10px;
-background-position : center left;
-}
-*:hover{
-background-color: rgb(4, 155, 255);
-}</string>
-            </property>
-            <property name="text">
-             <string>Settings</string>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
          </layout>
         </widget>
        </item>
@@ -714,6 +724,7 @@ background-color: rgb(4, 155, 255);
          </property>
          <property name="styleSheet">
           <string notr="true">*{background-color: rgb(17, 140, 255);
+	background-color: rgb(3, 114, 188);
 }
 
 QComboBox
@@ -886,6 +897,7 @@ border-radius : 10px;
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(3, 114, 188);
+background-color: rgb(25, 125, 193);
 color: rgb(255, 255, 255);
 border-radius : 10px;</string>
           </property>
@@ -1064,10 +1076,10 @@ border-radius : 10px;</string>
             </font>
            </property>
            <property name="text">
-            <string>Your Best Lift (2021-04-22)</string>
+            <string>Your Best Lift</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            <set>Qt::AlignCenter</set>
            </property>
           </widget>
           <widget class="QLabel" name="txtSquatScore_8">
@@ -1095,7 +1107,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_9">
+          <widget class="QLabel" name="txtBS_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -1120,7 +1132,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_10">
+          <widget class="QLabel" name="txtBS_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1145,7 +1157,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_11">
+          <widget class="QLabel" name="txtBS_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1170,7 +1182,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_12">
+          <widget class="QLabel" name="txtBS_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1195,7 +1207,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_13">
+          <widget class="QLabel" name="txtBS_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1219,7 +1231,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_14">
+          <widget class="QLabel" name="txtFS_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -1244,7 +1256,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_15">
+          <widget class="QLabel" name="txtFS_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1269,7 +1281,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_16">
+          <widget class="QLabel" name="txtFS_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1293,7 +1305,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_17">
+          <widget class="QLabel" name="txtFS_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1318,7 +1330,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_18">
+          <widget class="QLabel" name="txtFS_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1343,7 +1355,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_19">
+          <widget class="QLabel" name="txtBP_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -1368,7 +1380,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_20">
+          <widget class="QLabel" name="txtIBP_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -1393,7 +1405,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_21">
+          <widget class="QLabel" name="txtBP_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1418,7 +1430,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_22">
+          <widget class="QLabel" name="txtBP_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1442,7 +1454,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_23">
+          <widget class="QLabel" name="txtBP_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1467,7 +1479,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_24">
+          <widget class="QLabel" name="txtIBP_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1492,7 +1504,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_25">
+          <widget class="QLabel" name="txtIBP_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1517,7 +1529,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_26">
+          <widget class="QLabel" name="txtIBP_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1541,7 +1553,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_27">
+          <widget class="QLabel" name="txtIBP_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1566,7 +1578,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_28">
+          <widget class="QLabel" name="txtBP_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1591,7 +1603,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_29">
+          <widget class="QLabel" name="txtSDL_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1616,7 +1628,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_30">
+          <widget class="QLabel" name="txtDL_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1641,7 +1653,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_31">
+          <widget class="QLabel" name="txtSDL_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -1666,7 +1678,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_32">
+          <widget class="QLabel" name="txtDL_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1691,7 +1703,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_33">
+          <widget class="QLabel" name="txtDL_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -1716,7 +1728,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_34">
+          <widget class="QLabel" name="txtSDL_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1741,7 +1753,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_35">
+          <widget class="QLabel" name="txtDL_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1765,7 +1777,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_36">
+          <widget class="QLabel" name="txtSDL_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1789,7 +1801,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_37">
+          <widget class="QLabel" name="txtSDL_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1814,7 +1826,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_38">
+          <widget class="QLabel" name="txtDL_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1839,7 +1851,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_39">
+          <widget class="QLabel" name="txtOHP_ERP">
            <property name="geometry">
             <rect>
              <x>510</x>
@@ -1864,7 +1876,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_40">
+          <widget class="QLabel" name="txtOHP_Status">
            <property name="geometry">
             <rect>
              <x>930</x>
@@ -1888,7 +1900,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_41">
+          <widget class="QLabel" name="txtOHP_Days">
            <property name="geometry">
             <rect>
              <x>780</x>
@@ -1913,7 +1925,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_42">
+          <widget class="QLabel" name="txtOHP_Date">
            <property name="geometry">
             <rect>
              <x>640</x>
@@ -1938,7 +1950,7 @@ border-radius : 10px;</string>
             <set>Qt::AlignCenter</set>
            </property>
           </widget>
-          <widget class="QLabel" name="txtSquatScore_43">
+          <widget class="QLabel" name="txtOHP_WR">
            <property name="geometry">
             <rect>
              <x>390</x>
@@ -2099,6 +2111,7 @@ border-radius : 10px;</string>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(3, 114, 188);
+background-color: rgb(25, 125, 193);
 color: rgb(255, 255, 255);
 border-radius : 10px;</string>
           </property>
@@ -2278,6 +2291,7 @@ border-radius : 10px;</string>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(3, 114, 188);
+background-color: rgb(25, 125, 193);
 color: rgb(255, 255, 255);
 border-radius : 10px;</string>
           </property>
