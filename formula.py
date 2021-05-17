@@ -65,12 +65,63 @@ def listOfExcercise():
 def getLiftName(lift):
     query = "SELECT name FROM excercise WHERE abbreviation = %s"
     record = (lift,)
-    con = Connection
+    con = Connection(query,record)
     result = con.fetchOneQuerySQL()
     return result[0]
 
+def countRecordOf(user):
+    query = "SELECT COUNT(user_id) FROM lift WHERE user_id = %s"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchOneQuerySQL()
+    return result[0]
+
+def countLoginOf(user):
+    query = "SELECT COUNT(user) FROM session WHERE user = %s"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchOneQuerySQL()
+    return result[0]
+
+def countPswChangeOf(user):
+    query = "SELECT COUNT(user_id) FROM passwordchanges WHERE user_id = %s"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchOneQuerySQL()
+    return result[0]
+
+def getLastFiveSession(user):
+    query = "SELECT dateLogin FROM session WHERE user = %s ORDER BY id DESC LIMIT 5"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchAllQuerySQL()
+    temp = [r[0] for r in result]
+    res = [r.strftime('%Y-%m-%d %H:%M:%S') for r in temp]
+    res = res + ["","","",""]
+    return res
+
+def getLastFiveRecord(user):
+    query = "SELECT DISTINCT dateCreated FROM lift WHERE user_id = %s ORDER BY dateCreated DESC LIMIT 5"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchAllQuerySQL()
+    temp = [r[0] for r in result]
+    res = [r.strftime('%Y-%m-%d') for r in temp]
+    res = res + ["","","","",""]
+    return res
+
 def returnDateLogin(user_id):
     query = "SELECT DISTINCT dateCreated FROM lift WHERE user_id = %s"
+    record = (user_id,)
+    #result = list(fetchAllQuerySQL(query,record))
+    con = Connection(query,record)
+    result = con.fetchAllQuerySQL()
+    date = [d[0] for d in result]
+    dateString = [dt.strftime("%Y-%m-%d") for dt in date]
+    return dateString
+
+def returnDatePlan(user_id):
+    query = "SELECT DISTINCT dateCreated FROM plan WHERE user_id = %s"
     record = (user_id,)
     #result = list(fetchAllQuerySQL(query,record))
     con = Connection(query,record)
