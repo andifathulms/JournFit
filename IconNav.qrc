@@ -1,8 +1,26 @@
 <RCC>
   <qresource prefix="Image">
+    <file>Sumo Deadlift.png</file>
+    <file>Overhead Press.png</file>
+    <file>Front Squad.png</file>
+    <file>Deadlift.png</file>
+    <file>Squat.png</file>
+    <file>BP.png</file>
+    <file>imageedit_1_3767048030.png</file>
     <file>Tulisan JournFit-01.png</file>
   </qresource>
   <qresource prefix="ButtonIcon">
+    <file>email.png</file>
+    <file>pdf-file.png</file>
+    <file>padlock.png</file>
+    <file>bar-chart.png</file>
+    <file>camera.png</file>
+    <file>diagram.png</file>
+    <file>edit.png</file>
+    <file>logout.png</file>
+    <file>logoutWhite.png</file>
+    <file>pencil.png</file>
+    <file>user.png</file>
     <file>homeWhiteColor24Px.png</file>
     <file>menuWhiteColor24Px.png</file>
     <file>settingsWhiteColor24Px.png</file>
