@@ -39,7 +39,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>-432</y>
+         <y>0</y>
          <width>1293</width>
          <height>1222</height>
         </rect>
@@ -80,7 +80,7 @@
              <property name="frameShadow">
               <enum>QFrame::Raised</enum>
              </property>
-             <widget class="QLabel" name="label_2">
+             <widget class="QLabel" name="Logo">
               <property name="geometry">
                <rect>
                 <x>30</x>
@@ -102,8 +102,8 @@
              <widget class="QLabel" name="label_3">
               <property name="geometry">
                <rect>
-                <x>30</x>
-                <y>530</y>
+                <x>10</x>
+                <y>520</y>
                 <width>461</width>
                 <height>231</height>
                </rect>
@@ -125,7 +125,7 @@
                <string notr="true">color: rgb(255, 255, 255);</string>
               </property>
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:36pt;&quot;&gt;Sign up for &lt;br/&gt;your free account&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:36pt;&quot;&gt;Sign up for &lt;br/&gt;your free account&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

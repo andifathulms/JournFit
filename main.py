@@ -1,13 +1,29 @@
 import sys
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import *
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QDesktopWidget, QLabel, QHBoxLayout, QCalendarWidget, QMessageBox
-from PyQt5.QtGui import QPixmap, QIcon, QTextCharFormat, QFont, QColor, QBrush
-from numpy import mean
+from PyQt5.QtWidgets import QDialog, QApplication, QMainWindow, QDesktopWidget, QLabel, QHBoxLayout, QCalendarWidget, QLineEdit, QMessageBox, QInputDialog, QFileDialog, QWidget, QProgressDialog, QPushButton, QSizePolicy, QSlider, QStyle, QVBoxLayout, QWidget, QAction
+from PyQt5.QtGui import QPixmap, QIcon, QTextCharFormat, QFont, QColor, QBrush, QFontMetrics
+from PyQt5.QtWebEngineWidgets import *
 from formula import *
-from model import User, Lift
-
+from statistics import mean
+from model import User, Lift, Plan
+from PIL.ImageQt import ImageQt
+from PIL import Image
+import smtplib, ssl
+import os
+from email.message import EmailMessage
+from win10toast import ToastNotifier
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
+import threading
+import random
+from password_strength import PasswordPolicy, PasswordStats
+from newsScrapper import scrapingContent
+from web import showWeb
 
 #make non-Clickable object on Qt clickable 
 def clickable(widget):
@@ -24,10 +40,269 @@ def clickable(widget):
     widget.installEventFilter(filter)
     return filter.clicked
 
+def exportToPDF(self):
+    progress = QProgressDialog("Copying files...","Cancel",0,100)
+    progress.setWindowModality(Qt.WindowModal)
+    progress.setAutoClose(False)
+    progress.setMinimumDuration(0)
+    progress.resize(progress.size()+QSize(70,70))
+    tdee = tdeePage()
+    liftstats = liftStatsPage()
+    liftrecord = liftRecordPage()
+    acc = accountPage()
+    tdee.snapImg()
+    liftstats.snapImg()
+    liftrecord.snapImg()
+    acc.snapImg()
+    progress.setLabelText("Process Image 1")
+    progress.setValue(5)
+    time.sleep(0.1)
+    try:
+        img0 = Image.open("img/LogoAfterColored&Crop2.png")
+        img = Image.new('RGB', img0.size, (255,255,255))
+        img.paste(img0, mask=img0.split()[3])
+    except:
+        img0 = Image.open("img/LogoAfterColored&Crop2.png")
+
+    progress.setLabelText("Process Image 2")
+    progress.setValue(20)
+    time.sleep(0.1)
+    try:
+        img1 = Image.open("screenshot/account.png")
+        img1 = Image.new('RGB', img1.size, (255,255,255))
+        img1.paste(img0, mask=img1.split()[3])
+    except:
+        img1 = Image.open("screenshot/account.png")
+
+    progress.setLabelText("Process Image 3")
+    progress.setValue(40)
+    time.sleep(0.1)
+    try:
+        img2 = Image.open("screenshot/tdee.png")
+        img2 = Image.new('RGB', img2.size, (255,255,255))
+        img2.paste(img0, mask=img2.split()[3])
+    except:
+        img2 = Image.open("screenshot/tdee.png")
+
+    progress.setLabelText("Process Image 4")
+    progress.setValue(60)
+    time.sleep(0.1)
+    try:
+        img3 = Image.open("screenshot/liftrecord.png")
+        img3 = Image.new('RGB', img3.size, (255,255,255))
+        img3.paste(img3, mask=img3.split()[3])
+    except:
+        img3 = Image.open("screenshot/liftrecord.png")
+
+    progress.setLabelText("Process Image 5")
+    progress.setValue(80)
+    time.sleep(0.1)
+    try:
+        img4 = Image.open("screenshot/liftstats.png")  
+        img4 = Image.new('RGB', img4.size, (255,255,255))
+        img4.paste(img4, mask=img4.split()[3])
+    except:
+        img4 = Image.open("screenshot/liftstats.png")
+
+
+    img_list = [img1,img2,img3,img4]
+    progress.setLabelText("Complete")
+    progress.setValue(99)
+    time.sleep(0.1)
+    file = "screenshot/PDF/Record.pdf"
+    img.save(file, "PDF" ,resolution=100.0, save_all=True, append_images=img_list)
+    win10Notif()
+
+def sentToEmail(self):
+    progress = QProgressDialog("Copying files...","Cancel",0,100)
+    progress.setWindowModality(Qt.WindowModal)
+    progress.setAutoClose(False)
+    progress.setMinimumDuration(0)
+    progress.resize(progress.size()+QSize(70,70))
+    #progress.setMinimumWidth(200)
+
+
+    msg = EmailMessage()
+    progress.setLabelText("Authentification")
+    msg['Subject'] = 'Journfit'
+    msg['From'] = 'JournFit Notification'
+    msg['To'] = 'officialandifathul@gmail.com'
+    msg.set_content('Your training stats')
+    progress.setValue(20)
+    time.sleep(0.2)
+    progress.setLabelText("Load HTML content")
+    with open('html/msg.html', 'r') as file:
+        html = file.read().rstrip('\n')
+
+    msg.add_alternative(html, subtype='html')
+    progress.setValue(40)
+    time.sleep(0.2)
+    progress.setLabelText("Attach PDF File")
+    progress.setValue(60)
+    with open("screenshot/record.pdf","rb") as f:
+        content = f.read()
+        msg.add_attachment(content, maintype='application', subtype='pdf', filename='record.pdf')
+    time.sleep(0.1)
+    progress.setLabelText("Send Email...")
+    progress.setValue(80)
+    with smtplib.SMTP('smtp.gmail.com',587) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.ehlo()
+
+        smtp.login("notifications-journfit@haloloyase.net", "RiemannConjecture")
+        smtp.send_message(msg)
+    time.sleep(0.1)
+    progress.setLabelText("Complete")
+    progress.setValue(99)
+    time.sleep(0.1)
+    progress.cancel()
+
+    win10NotifEmail()
+
+def sentOTPEmail(otp):
+    msg = EmailMessage()
+    msg['Subject'] = 'Journfit'
+    msg['From'] = 'JournFit Notification'
+    msg['To'] = 'officialandifathul@gmail.com'
+    msg.set_content('Password Change')
+    #with open('html/LETTER_OTP.html', 'r') as file:
+    #    html = file.read().rstrip('\n')
+    html = """\
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>JournFit</title>
+            </head>
+            <body>
+            <table style="margin-left: auto; margin-right: auto; height: 421px;" width="462">
+            <tbody>
+            <tr style="height: 424.4px;">
+            <td style="width: 452.8px; height: 424.4px;">
+            <table style="margin-left: auto; margin-right: auto; height: 26px;" width="434">
+            <tbody>
+            <tr>
+            <td style="width: 424.8px;">&nbsp;<img src="img/LogoAfterColored&Crop2.png" alt="" width="444" height="175" /></td>
+            </tr>
+            </tbody>
+            </table>
+            <table style="margin-left: auto; margin-right: auto; height: 68px;" width="451">
+            <tbody>
+            <tr>
+            <td style="width: 441.6px; text-align: center;"><strong><strong><br />[OTP] Password recovery</strong></strong><hr /><strong><br /></strong></td>
+            </tr>
+            </tbody>
+            </table>
+            <table style="margin-left: auto; margin-right: auto; height: 35px;" width="449">
+            <tbody>
+            <tr>
+            <td style="width: 440px;">&nbsp;OTP : {otp}<br />&nbsp;is your JournFit Verivication code.<br /><hr /></td>
+            </tr>
+            </tbody>
+            </table>
+            <table style="margin-left: auto; margin-right: auto; height: 26px;" width="450">
+            <tbody>
+            <tr>
+            <td style="width: 440.8px; text-align: center;"><span style="color: #999999;"><strong>&copy;2021 JournFit</strong></span></td>
+            </tr>
+            </tbody>
+            </table>
+            </td>
+            </tr>
+            </tbody>
+            </table>
+            </body>
+            </html>
+            """.format(otp=otp)
+    msg.add_alternative(html, subtype='html')
+    with smtplib.SMTP('smtp.gmail.com',587) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.ehlo()
+
+        smtp.login("notifications-journfit@haloloyase.net", "RiemannConjecture")
+        smtp.send_message(msg)
+
+    print("Sent")
+
+def openInbox():
+    url = "https://mail.google.com/mail/u/0/#inbox"
+    options = Options()
+    options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    options.headless = False
+    print("Open Driver..")
+    driver = webdriver.Chrome("C:\\Users\\LENOVO\\chromedriver.exe", options = options)
+    print("Request URL..")
+    driver.get(url)
+
+def openFolder():
+    path = "D:\\Project\\Journfit\\screenshot\\PDF"
+    path = os.path.realpath(path)
+    os.startfile(path)
+
+def win10Notif():
+    toaster = ToastNotifier()
+    toaster.show_toast("JournFit","Your report has been made. Click to open!",duration=60, threaded=True, callback_on_click=openFolder)
+
+def win10NotifEmail():
+    toaster = ToastNotifier()
+    toaster.show_toast("JournFit","You're email has been sent!",duration=15, threaded=True, callback_on_click=openInbox)
+ 
+def checkPasswordPolicy(password):
+    policy = PasswordPolicy.from_names(length=6,uppercase=1,numbers=1)
+    return policy.test(password)
+
+def checkPasswordStrength(password):
+    try:
+        stats = PasswordStats(password)
+        return stats.strength()
+    except:
+        return 0
+
+class openWeb(QWebEngineView):
+    def __init__(self):
+        super(openWeb, self).__init__()
+        global news
+        web = QWebEngineView()
+        web.load(QUrl("www.google.com"))
+        #web.load(QUrl("https://www.health.com/fitness/this-50-push-up-challenge-will-transform-your-body-in-30-days"))
+        web.show()
+
+class dialog(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.title = 'Choose a file'
+        self.left = 10
+        self.top = 10
+        self.width = 640
+        self.height = 480
+        self.file = ""
+        self.initUI()
+    
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        
+        #self.openFileNameDialog()
+        self.show()
+    
+    def openFileNameDialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+        if fileName:
+            print(fileName)
+            self.file = fileName
+            #return fileName
+
 class loginPage(QMainWindow):
+
     def __init__(self):
         super(loginPage, self).__init__()
         loadUi("Login2.ui", self)
+
+        self.eyeClick = 0
 
         self.initUI()
         self.initConnection()
@@ -37,11 +312,36 @@ class loginPage(QMainWindow):
     def initUI(self):
         pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
         self.Logo.setPixmap(pixmap)
+        pixmap = QPixmap("img/view.png")
+        self.txtShowPass.setPixmap(pixmap)
+        self.center()
+
+    def center(self):
+        """
+        qtRectangle = self.frameGeometry()
+        print(qtRectangle)
+        centerPoint = QDesktopWidget().availableGeometry().center()
+        qtRectangle.moveCenter(centerPoint)
+        self.move(qtRectangle.topLeft())
+        print(centerPoint)
+        """
+        resolution = QDesktopWidget().screenGeometry()
+        self.move((resolution.width() / 2) - (self.frameSize().width() / 2),
+                  (resolution.height() / 2) - (self.frameSize().height() / 2)) 
+        #self.move(0,0)
 
     def initConnection(self):
         self.btnLogin.clicked.connect(self.onClickBtnLogin)
         clickable(self.txtSignUp).connect(self.gotoSignUp)
         clickable(self.txtForget).connect(self.gotoChangePsw)
+        clickable(self.txtShowPass).connect(self.showHidePsw)
+
+    def showHidePsw(self):
+        if self.eyeClick%2 == 0:
+            self.txtPassword.setEchoMode(QLineEdit.Normal)
+        else:
+            self.txtPassword.setEchoMode(QLineEdit.Password)
+        self.eyeClick += 1
 
     def onClickBtnLogin(self):
         user = self.txtUsername.text()
@@ -52,7 +352,7 @@ class loginPage(QMainWindow):
             self.txtMessage.setText("Success")
             user = User(idFromUser(user))
             user.addSession()
-            self.gotoLiftLog() #change later
+            self.gotoHome() #change later
         elif checkLoginValid(user,psw) == 0:
             self.txtMessage.setText("Username not found")
         else:
@@ -73,36 +373,176 @@ class loginPage(QMainWindow):
         widget.addWidget(changePsw)
         widget.setCurrentWidget(changePsw)
 
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
 class changePswPage(QMainWindow):
     def __init__(self):
         super(changePswPage, self).__init__()
         loadUi("changePass.ui", self)
 
+        self.eyeClick = 0
+        self.eyeClick2 = 0
         self.initUI()
         self.initConnection()
-        
+        #self.otp = self.generateOTP()
+        self.otp = "000000"
+
+        self.count = 0
+        self.start = False
+        self.time = 60
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.showTimer)
+        self.timer.start(100)
+
         print("Change Password")
 
     def initUI(self):
         pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
         self.Logo.setPixmap(pixmap)
+        pixmap = QPixmap("img/view.png")
+        self.txtShowPass.setPixmap(pixmap)
+        self.txtShowPass_2.setPixmap(pixmap)
+        self.txtOTP.setPlaceholderText("Enter OTP Code")
+        self.txtOTP.setVisible(False)
+        self.txtTimer.setVisible(False)
 
     def initConnection(self):
         self.btnLogin.clicked.connect(self.onClickBtnLogin)
-        clickable(self.txtSignUp).connect(self.gotoSignUp)
-        clickable(self.txtLogin).connect(self.gotoLogin)
+        clickable(self.txtSignUp).connect(lambda : self.gotoSignUp(self.timer))
+        clickable(self.txtLogin).connect(lambda : self.gotoLogin(self.timer))
+        self.txtPassword.cursorPositionChanged.connect(self.checkPassword)
+        self.txtRPassword.cursorPositionChanged.connect(self.checkRPassword)
+        clickable(self.txtShowPass).connect(self.showHidePsw)
+        clickable(self.txtShowPass_2).connect(self.showHidePsw2)
+
+    def showHidePsw(self):
+        if self.eyeClick%2 == 0:
+            self.txtPassword.setEchoMode(QLineEdit.Normal)
+        else:
+            self.txtPassword.setEchoMode(QLineEdit.Password)
+        self.eyeClick += 1
+
+    def showHidePsw2(self):
+        if self.eyeClick2%2 == 0:
+            self.txtRPassword.setEchoMode(QLineEdit.Normal)
+        else:
+            self.txtRPassword.setEchoMode(QLineEdit.Password)
+        self.eyeClick2 += 1
 
     def onClickBtnLogin(self): #onClickBtnChangePassword
         user = self.txtUsername.text()
         psw = self.txtPassword.text() 
         rePsw = self.txtRPassword.text()
         msg = self.isValid(user,psw,rePsw)[1]
-        if self.isValid(user,psw,rePsw)[0] :
-            user = User(idFromUser(user))
-            user.changePassword(psw)
-            self.gotoLogin()
+        if self.isValid(user,psw,rePsw)[0] and checkPasswordPolicy(psw) == [] :
+            self.txtOTP.setVisible(True)
+            self.txtTimer.setVisible(True)
+            self.txtTimer.setText(str(self.time))
+            self.count = self.time * 10
+            self.start_action()
+            self.otp = self.generateOTP()
+            print(self.otp)
+            #self.showTimer()
+            self.txtMessage.setText("OTP has been sent to your email")
+            self.txtOTP.cursorPositionChanged.connect(self.verifyOTP)
+            loop = QEventLoop()
+            sentOTPEmail(self.otp)
+            loop.exec()
+            #user = User(idFromUser(user))
+            #user.changePassword(psw)
+            #self.gotoLogin()
         else:
             self.txtMessage.setText(msg)
+        
+    def checkPassword(self):
+        psw = self.txtPassword.text()
+        result = [str(a) for a in checkPasswordPolicy(psw)]
+        if("Length(6)" in result):
+            self.txtMessage.setText("Password at least have 6 characters")
+        elif("Uppercase(1)" in result):
+            self.txtMessage.setText("Password at least have 1 uppercase")
+        elif("Numbers(1)" in result):
+            self.txtMessage.setText("Password at least have 1 numbers")
+        else:
+            self.txtMessage.setText("")
+
+        score = checkPasswordStrength(psw)
+        self.txtPswScore.setText(f'Score: {round(score,3)}')
+        if score >= 0.8:
+            self.txtPswStrength.setText("Very Strong")
+            self.txtPswScore.setStyleSheet('*{color: rgb(237, 41, 57); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(237, 41, 57); background-color: rgb(255,255,255); border-style: none;}')
+        elif score >= 0.6:
+            self.txtPswStrength.setText("Strong")
+            self.txtPswScore.setStyleSheet('*{color: rgb(255, 102, 0); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(255, 102, 0); background-color: rgb(255,255,255); border-style: none;}')
+        elif score >= 0.5:
+            self.txtPswStrength.setText("Good")
+            self.txtPswScore.setStyleSheet('*{color: rgb(11, 102, 35); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(11, 102, 35); background-color: rgb(255,255,255); border-style: none;}')
+        elif score >= 0.3:
+            self.txtPswStrength.setText("Weak")
+            self.txtPswScore.setStyleSheet('*{color: rgb(252, 226, 5); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(252, 226, 5); background-color: rgb(255,255,255); border-style: none;}')
+        else:
+            self.txtPswStrength.setText("Vulnerable")
+            self.txtPswScore.setStyleSheet('*{color: rgb(100, 0, 100); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(100, 0, 100); background-color: rgb(255,255,255); border-style: none;}')
+
+    def checkRPassword(self):
+        psw = self.txtPassword.text()
+        rpsw = self.txtRPassword.text()
+        if psw != rpsw:
+            self.txtMessage.setText("Password not matched")
+        else:
+            self.txtMessage.setText("")
+
+    def verifyOTP(self):
+        print("This")
+        if len(self.txtOTP.text()) == 6:
+            if self.txtOTP.text() == self.otp:
+                user = User(idFromUser(self.txtUsername.text()))
+                user.changePassword(self.txtPassword.text())
+                self.gotoHome(self.timer)
+            else:
+                self.txtMessage.setText("Incorrect OTP. Try Again")
+                self.txtOTP.setText("")
+
+    def showTimer(self):
+        #print("This")
+        if self.start:
+            self.count -= 1
+
+            if self.count <= 100:
+                self.txtTimer.setStyleSheet('*{color: rgb(255, 0, 68); background-color: rgb(255,255,255); border-style: none;}')
+            elif self.count <= 200:
+                self.txtTimer.setStyleSheet('*{color: rgb(255, 170, 0); background-color: rgb(255,255,255); border-style: none;}')
+            else:
+                self.txtTimer.setStyleSheet('*{color: rgb(0, 0, 0); background-color: rgb(255,255,255); border-style: none;}')
+
+            if self.count == 0:
+                self.start = False
+                self.txtMessage.setText("Timeout. New OTP has been sent")
+                self.otp = self.generateOTP()
+                print(self.otp)
+                self.txtTimer.setText(str(self.time))
+                self.count = self.time * 10
+                self.start_action()
+                sentOTPEmail(self.otp)
+        if self.start:
+            text = str(self.count / 10) + " s"
+            self.txtTimer.setText(text)
+
+    def start_action(self):
+        # making flag true
+        self.start = True
+  
+        # count = 0
+        if self.count == 0:
+            self.start = False
 
     def isValid(self,user,psw,rePsw):
         flag = False
@@ -115,20 +555,176 @@ class changePswPage(QMainWindow):
             msg = "Password field doesnt match!"
         elif ifUser(user) == 0:
             msg = "User not found!"
+        elif checkPasswordStrength(psw) < 0.5:
+            msg = "Try better password"
         else:
             flag = True
 
         return [flag,msg]
+
+    def generateOTP(self):
+        pool = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R",
+                "S","T","U","V","W","X","Y","Z","0","1","2","3","4","5","6","7","8","9"]
+        
+        otp = ""
+        for i in range(0,6):
+            otp += pool[random.randint(0,35)]
+        print(otp)
+        return otp
+
+    def gotoSignUp(self,timer):
+        timer.stop()
+        signUp = signUpPage()
+        widget.addWidget(signUp)
+        widget.setCurrentWidget(signUp)
+
+    def gotoLogin(self,timer):
+        timer.stop()
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self,timer):
+        timer.stop()
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self,timer):
+        timer.stop()
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+class changePswPageFromInside(QMainWindow):
+    def __init__(self):
+        super(changePswPageFromInside, self).__init__()
+        loadUi("changePass.ui", self)
+        self.eyeClick = 0
+        self.eyeClick2 = 0
+        self.user = User(getLastSession()) 
+
+        self.initUI()
+        self.initConnection()
+        self.txtPassword.setPlaceholderText("Enter your old password")
+        self.txtRPassword.setPlaceholderText("Enter your new password")
+        self.txtOTP.setVisible(False)
+        print("Change Password")
+
+    def initUI(self):
+        pixmap = QPixmap("img/LogoAfterColored&Crop2.png")
+        self.Logo.setPixmap(pixmap)
+        self.txtUsername.setText(self.user.name)
+        self.txtUsername.setReadOnly(True)
+        pixmap = QPixmap("img/view.png")
+        self.txtShowPass.setPixmap(pixmap)
+        self.txtShowPass_2.setPixmap(pixmap)
+
+    def initConnection(self):
+        self.btnLogin.clicked.connect(self.onClickBtnLogin)
+        clickable(self.txtSignUp).connect(self.gotoSignUp)
+        clickable(self.txtLogin).connect(self.gotoAccount)
+        self.txtRPassword.cursorPositionChanged.connect(self.checkPassword)
+        clickable(self.txtShowPass).connect(self.showHidePsw)
+        clickable(self.txtShowPass_2).connect(self.showHidePsw2)
+
+    def showHidePsw(self):
+        if self.eyeClick%2 == 0:
+            self.txtPassword.setEchoMode(QLineEdit.Normal)
+        else:
+            self.txtPassword.setEchoMode(QLineEdit.Password)
+        self.eyeClick += 1
+
+    def showHidePsw2(self):
+        if self.eyeClick2%2 == 0:
+            self.txtRPassword.setEchoMode(QLineEdit.Normal)
+        else:
+            self.txtRPassword.setEchoMode(QLineEdit.Password)
+        self.eyeClick2 += 1
+
+    def onClickBtnLogin(self): #onClickBtnChangePassword
+        user = self.txtUsername.text()
+        oldpsw = self.txtPassword.text() 
+        newpsw = self.txtRPassword.text()
+        msg = self.isValid(user,oldpsw,newpsw)[1]
+        if self.isValid(user,oldpsw,newpsw)[0] and checkPasswordPolicy(newpsw) == []:
+            user = User(idFromUser(user))
+            realpsw = user.password
+            if oldpsw == realpsw:
+                user.changePassword(newpsw)
+                self.gotoAccount()
+                print("==")
+            else:
+                self.txtMessage.setText("Password incorrect!")
+                #self.txtPassword.setText("")
+                #self.txtRPassword.setText("")
+                print("!=")
+        else:
+            self.txtMessage.setText(msg)
+
+    def isValid(self,user,old,new):
+        flag = False
+        msg = ""
+        if user == "":
+            msg = "Please fill username field!"
+        elif old == "":
+            msg = "Please fill old password field!"
+        elif new == "":
+            msg = "Please fill new password field!"
+        elif ifUser(user) == 0:
+            msg = "User not found!"
+        elif checkPasswordStrength(new) < 0.5:
+            msg = "Try better password"
+        else:
+            flag = True
+
+        return [flag,msg]
+
+    def checkPassword(self):
+        psw = self.txtRPassword.text()
+        result = [str(a) for a in checkPasswordPolicy(psw)]
+        if("Length(6)" in result):
+            self.txtMessage.setText("Password at least have 6 characters")
+            print("IN")
+        elif("Uppercase(1)" in result):
+            self.txtMessage.setText("Password at least have 1 uppercase")
+        elif("Numbers(1)" in result):
+            self.txtMessage.setText("Password at least have 1 numbers")
+        else:
+            self.txtMessage.setText("")
+
+        score = checkPasswordStrength(psw)
+        self.txtPswScore.setText(f'Score: {round(score,3)}')
+        if score >= 0.8:
+            self.txtPswStrength.setText("Very Strong")
+            self.txtPswScore.setStyleSheet('*{color: rgb(237, 41, 57); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(237, 41, 57); background-color: rgb(255,255,255); border-style: none;}')
+        elif score >= 0.6:
+            self.txtPswStrength.setText("Strong")
+            self.txtPswScore.setStyleSheet('*{color: rgb(255, 102, 0); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(255, 102, 0); background-color: rgb(255,255,255); border-style: none;}')
+        elif score >= 0.5:
+            self.txtPswStrength.setText("Good")
+            self.txtPswScore.setStyleSheet('*{color: rgb(11, 102, 35); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(11, 102, 35); background-color: rgb(255,255,255); border-style: none;}')
+        elif score >= 0.3:
+            self.txtPswStrength.setText("Weak")
+            self.txtPswScore.setStyleSheet('*{color: rgb(252, 226, 5); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(252, 226, 5); background-color: rgb(255,255,255); border-style: none;}')
+        else:
+            self.txtPswStrength.setText("Vulnerable")
+            self.txtPswScore.setStyleSheet('*{color: rgb(100, 0, 100); background-color: rgb(255,255,255); border-style: none;}')
+            self.txtPswStrength.setStyleSheet('*{color: rgb(100, 0, 100); background-color: rgb(255,255,255); border-style: none;}')
 
     def gotoSignUp(self):
         signUp = signUpPage()
         widget.addWidget(signUp)
         widget.setCurrentWidget(signUp)
 
-    def gotoLogin(self):
-        login = loginPage()
-        widget.addWidget(login)
-        widget.setCurrentWidget(login)
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
 
 class signUpPage(QMainWindow):
     def __init__(self):
@@ -218,17 +814,1675 @@ class signUpPage(QMainWindow):
         widget.addWidget(liftLog)
         widget.setCurrentWidget(liftLog)
 
+class homePage(QMainWindow):
+    def __init__(self):
+        super(homePage, self).__init__()
+        loadUi("Home.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+        self.getNews()
+
+    def initUI(self):
+        self.frame1.setStyleSheet('QFrame {image: url(img/Squat.png) no-repeat center center fixed;border : transparent;}')
+        self.frame2.setStyleSheet('QFrame {image: url(img/Deadlift.png) no-repeat center center fixed;border : transparent;}')
+        self.frame3.setStyleSheet('QFrame {image: url(img/BP.png) no-repeat center center fixed;border : transparent;}')
+        self.frame4.setStyleSheet('QFrame {image: url(img/FrontSquat.png) no-repeat center center fixed;border : transparent;}')
+        self.frame5.setStyleSheet('QFrame {image: url(img/OverheadPress.png) no-repeat center center fixed;border : transparent;}')
+        self.frame6.setStyleSheet('QFrame {image: url(img/SumoDeadlift.png) no-repeat center center fixed;border : transparent;}')
+        self.frame7.setStyleSheet('QFrame {image: url(img/Latpulldown.png) no-repeat center center fixed;border : transparent;}')
+        self.frame8.setStyleSheet('QFrame {image: url(img/Barbellrow.png) no-repeat center center fixed;border : transparent;}')
+        self.frame9.setStyleSheet('QFrame {image: url(img/Pullups.png) no-repeat center center fixed;border : transparent;}')
+        self.frame10.setStyleSheet('QFrame {image: url(img/Cablerow.png) no-repeat center center fixed;border : transparent;}')
+        self.frame11.setStyleSheet('QFrame {image: url(img/InclineBenchpress.png) no-repeat center center fixed;border : transparent;}')
+        self.frame12.setStyleSheet('QFrame {image: url(img/Legpress.png) no-repeat center center fixed;border : transparent;}')
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBS.clicked.connect(self.gotoSquat)
+        clickable(self.news1).connect(lambda : self.gotoOpenWeb(1,0))
+        clickable(self.news2).connect(lambda : self.gotoOpenWeb(1,1))
+        clickable(self.news3).connect(lambda : self.gotoOpenWeb(1,2))
+        clickable(self.news4).connect(lambda : self.gotoOpenWeb(1,3))
+        clickable(self.news5).connect(lambda : self.gotoOpenWeb(1,4))
+        clickable(self.tnews1).connect(lambda : self.gotoOpenWeb(3,0))
+        clickable(self.tnews2).connect(lambda : self.gotoOpenWeb(3,1))
+        clickable(self.tnews3).connect(lambda : self.gotoOpenWeb(3,2))
+        clickable(self.tnews4).connect(lambda : self.gotoOpenWeb(3,3))
+        clickable(self.tnews5).connect(lambda : self.gotoOpenWeb(3,4))
+        clickable(self.wnews1).connect(lambda : self.gotoOpenWeb(5,0))
+        clickable(self.wnews2).connect(lambda : self.gotoOpenWeb(5,1))
+        clickable(self.wnews3).connect(lambda : self.gotoOpenWeb(5,2))
+        clickable(self.wnews4).connect(lambda : self.gotoOpenWeb(5,3))
+        clickable(self.wnews5).connect(lambda : self.gotoOpenWeb(5,4))
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def getNews(self):
+        global news
+        self.news1.setText(news[0][0])
+        self.news2.setText(news[0][1])
+        self.news3.setText(news[0][2])
+        self.news4.setText(news[0][3])
+        self.news5.setText(news[0][4])
+        self.tnews1.setText(news[2][0])
+        self.tnews2.setText(news[2][1])
+        self.tnews3.setText(news[2][2])
+        self.tnews4.setText(news[2][3])
+        self.tnews5.setText(news[2][4])
+        self.wnews1.setText(news[4][0])
+        self.wnews2.setText(news[4][1])
+        self.wnews3.setText(news[4][2])
+        self.wnews4.setText(news[4][3])
+        self.wnews5.setText(news[4][4])
+
+    def gotoOpenWeb(self,url,idx):
+        url = news[url][idx]
+        loop = QEventLoop()
+        web = QWebEngineView()
+        web.load(QUrl(url))
+        web.show()
+        loop.exec()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoSquat(self):
+        exc = excSquat()
+        widget.addWidget(exc)
+        widget.setCurrentWidget(exc)
+
+
+class excSquat(QMainWindow):
+    def __init__(self):
+        super(excSquat, self).__init__()
+        loadUi("squat.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+
+    def initUI(self):
+        pass
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBack.clicked.connect(self.gotoHome)
+        self.btnPrev.clicked.connect(self.gotoLegPress)
+        self.btnNext.clicked.connect(self.gotoDeadlift)
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+    def gotoLegPress(self):
+        legpress = excLegPress()
+        widget.addWidget(legpress)
+        widget.setCurrentWidget(legpress)
+
+    def gotoDeadlift(self):
+        deadlift = excDeadlift()
+        widget.addWidget(deadlift)
+        widget.setCurrentWidget(deadlift)
+
+class excDeadlift(QMainWindow):
+    def __init__(self):
+        super(excDeadlift, self).__init__()
+        loadUi("deadlift.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+
+    def initUI(self):
+        pass
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBack.clicked.connect(self.gotoHome)
+        self.btnPrev.clicked.connect(self.gotoSquat)
+        self.btnNext.clicked.connect(self.gotoBenchPress)
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+    def gotoSquat(self):
+        squat = excSquat()
+        widget.addWidget(squat)
+        widget.setCurrentWidget(squat)
+
+    def gotoBenchPress(self):
+        benchpress = excBenchPress()
+        widget.addWidget(benchpress)
+        widget.setCurrentWidget(benchpress)
+
+class excBenchPress(QMainWindow):
+    def __init__(self):
+        super(excBenchPress, self).__init__()
+        loadUi("benchpress.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+
+    def initUI(self):
+        pass
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBack.clicked.connect(self.gotoHome)
+        self.btnPrev.clicked.connect(self.gotoDeadlift)
+        self.btnNext.clicked.connect(self.gotoFrontSquat)
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+    def gotoDeadlift(self):
+        deadlift = excDeadlift()
+        widget.addWidget(deadlift)
+        widget.setCurrentWidget(deadlift)
+
+    def gotoFrontSquat(self):
+        frontsquat = excFrontSquat()
+        widget.addWidget(frontsquat)
+        widget.setCurrentWidget(frontsquat)
+
+class excFrontSquat(QMainWindow):
+    def __init__(self):
+        super(excFrontSquat, self).__init__()
+        loadUi("frontsquat.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+
+    def initUI(self):
+        pass
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBack.clicked.connect(self.gotoHome)
+        self.btnPrev.clicked.connect(self.gotoBenchPress)
+        self.btnNext.clicked.connect(self.gotoOverheadPress)
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+    def gotoBenchPress(self):
+        bp = excBenchPress()
+        widget.addWidget(bp)
+        widget.setCurrentWidget(bp)
+
+    def gotoOverheadPress(self):
+        ohp = excOverheadPress()
+        widget.addWidget(ohp)
+        widget.setCurrentWidget(ohp)
+
+class excOverheadPress(QMainWindow):
+    def __init__(self):
+        super(excOverheadPress, self).__init__()
+        loadUi("ohp.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+
+    def initUI(self):
+        pass
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBack.clicked.connect(self.gotoHome)
+        self.btnPrev.clicked.connect(self.gotoFrontSquat)
+        self.btnNext.clicked.connect(self.gotoSumoDeadlift)
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+    def gotoFrontSquat(self):
+        fs = excFrontSquat()
+        widget.addWidget(fs)
+        widget.setCurrentWidget(fs)
+
+    def gotoSumoDeadlift(self):
+        sdl = excSumoDeadlift()
+        widget.addWidget(sdl)
+        widget.setCurrentWidget(sdl)
+
+class excSumoDeadlift(QMainWindow):
+    def __init__(self):
+        super(excSumoDeadlift, self).__init__()
+        loadUi("sdl.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+        self.initConnection()
+        self.initNav()
+        self.initUI()
+
+    def initUI(self):
+        pass
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnBack.clicked.connect(self.gotoHome)
+        self.btnPrev.clicked.connect(self.gotoOverheadPress)
+        self.btnNext.clicked.connect(self.gotoLatPulldown)
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login) 
+    
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+    def gotoOverheadPress(self):
+        ohp = excOverheadPress()
+        widget.addWidget(ohp)
+        widget.setCurrentWidget(ohp)
+
+    def gotoLatPulldown(self):
+        lp = excLatPulldown()
+        widget.addWidget(lp)
+        widget.setCurrentWidget(lp)
+
 class liftLogPage(QMainWindow):
     def __init__(self):
         super(liftLogPage, self).__init__()
         loadUi("LiftLog.ui", self)
 
+        self.today = QDate.currentDate().addDays(0)
+        self.dateSelect = self.today
+        self.toggleEdit = 0
+        self.mediaClick = 0
+        self.settingClick = 0
+        self.user = User(getLastSession())
+
         self.initUI()
         self.initNav()
         self.initCalendar()
         self.initConnection()
-
-        self.toggleEdit = 0
+        self.onClickCalendar()
         
         print("Lift Log")
 
@@ -252,8 +2506,39 @@ class liftLogPage(QMainWindow):
         self.btnSubmitE6.clicked.connect(self.onClickBtnE6)
         self.btnToggle.clicked.connect(self.slideToRight)
         self.btnToggleEdit.clicked.connect(self.onClickToggleEdit)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnMediaOption.clicked.connect(self.onClickMediaOption)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnHome.clicked.connect(self.gotoHome)
+
+        #media connection all 36 of them
+        self.btnMediaE1S1.clicked.connect(self.onClickBtnMediaE1S1)
+        self.btnMediaE1S2.clicked.connect(self.onClickBtnMediaE1S2)
+        self.btnMediaE1S3.clicked.connect(self.onClickBtnMediaE1S3)
+        self.btnMediaE1S4.clicked.connect(self.onClickBtnMediaE1S4)
+        self.btnMediaE1S5.clicked.connect(self.onClickBtnMediaE1S5)
+        self.btnMediaE1S6.clicked.connect(self.onClickBtnMediaE1S6)
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
 
     def initCalendar(self):
+        self.calendarWidget.setSelectedDate(self.today)
         format1 = QTextCharFormat()
         format2 = QTextCharFormat()
         format1.setBackground(QColor.fromRgb(0,0,255))
@@ -267,63 +2552,114 @@ class liftLogPage(QMainWindow):
         #self.calendarWidget.setHeaderTextFormat(format1)
         self.calendarWidget.setWeekdayTextFormat(Qt.Saturday,format2)
         self.calendarWidget.setWeekdayTextFormat(Qt.Sunday,format2)
+        
+        for date in self.qtDateFromStringPlan():
+            if self.today.daysTo(date) > 0:
+                format = QTextCharFormat()
+                format.setFontUnderline(True)
+                format.setFontWeight(10)
+                format.setUnderlineColor(QColor.fromRgb(0,0,0,50))
+                format.setBackground(QColor.fromRgb(98,145,255))
+                self.calendarWidget.setDateTextFormat(date,format)
+
         for date in self.qtDateFromString():
-            #date = QDate(2021,4,1)
             format = QTextCharFormat()
-            #format.setFont(QFont('Times',8))
             format.setFontUnderline(True)
             format.setFontWeight(10)
             format.setUnderlineColor(QColor.fromRgb(0,0,0,50))
             format.setBackground(QColor.fromRgb(136,216,199))
             self.calendarWidget.setDateTextFormat(date,format)
-            #print(self.qtDateFromString())
 
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
         icon0 = QIcon(pxm0)
-        self.btnToggle.setIcon(icon0)
         pxm1 = QPixmap("img/homeWhiteColor24Px.png")
         icon1 = QIcon(pxm1)
-        self.btnHome.setIcon(icon1)
         pxm2 = QPixmap("img/userWhiteColor24Px.png")
         icon2 = QIcon(pxm2)
-        self.btnLiftLog.setIcon(icon2)
-        pxm3 = QPixmap("img/settingsWhiteColor24Px.png")
+        pxm3 = QPixmap("img/document.png")
         icon3 = QIcon(pxm3)
-        self.btnTDEE.setIcon(icon3)
-        self.btnLiftStats.setIcon(icon3)
-        self.btnLiftRecord.setIcon(icon3)
-        self.btnMuscleStats.setIcon(icon3)
-        self.btnStrengthStandard.setIcon(icon3)
-        self.btnAccount.setIcon(icon3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
 
         self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
         self.btnHome.setText("")
         self.btnLiftLog.setText("")
         self.btnTDEE.setText("")
         self.btnLiftStats.setText("")
         self.btnLiftRecord.setText("")
-        self.btnMuscleStats.setText("")
         self.btnStrengthStandard.setText("")
         self.btnAccount.setText("")
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
 
         #connection
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftStats.clicked.connect(self.gotoLiftStats)
         self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
-        self.btnAccount.clicked.connect(self.gotoLogin)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
 
     def slideToRight(self):
         width = self.LeftSideMenu.width()
@@ -333,9 +2669,13 @@ class liftLogPage(QMainWindow):
             self.btnTDEE.setText("TDEE Stats")
             self.btnLiftStats.setText("Lift Stats")
             self.btnLiftRecord.setText("Lift Record")
-            self.btnMuscleStats.setText("Muscle Stats")
             self.btnStrengthStandard.setText("Strength Standard")
             self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
             newWidth = 225
         else:
             self.btnHome.setText("")
@@ -343,9 +2683,13 @@ class liftLogPage(QMainWindow):
             self.btnTDEE.setText("")
             self.btnLiftStats.setText("")
             self.btnLiftRecord.setText("")
-            self.btnMuscleStats.setText("")
             self.btnStrengthStandard.setText("")
             self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -355,17 +2699,56 @@ class liftLogPage(QMainWindow):
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
 
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
     def qtDateFromString(self):
         dateList = returnDateLogin(getLastSession())
+        qtDate = [QDate.fromString(d, "yyyy-MM-dd") for d in dateList]
+        return qtDate
+
+    def qtDateFromStringPlan(self):
+        dateList = returnDatePlan(getLastSession())
         qtDate = [QDate.fromString(d, "yyyy-MM-dd") for d in dateList]
         return qtDate
 
     def onClickCalendar(self):
         btnList = [self.btnSubmitE1,self.btnSubmitE2,self.btnSubmitE3,self.btnSubmitE4,self.btnSubmitE5,self.btnSubmitE6]
         date = self.calendarWidget.selectedDate()
-        user = User(getLastSession())
-        result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
-        #result = showRecordOn(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
+        self.dateSelect = date
+        user = self.user
+        # == 0 need attention
+        if self.today.daysTo(date) < 0 : #change <= later
+            self.styleRecord()
+            result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+        elif self.today.daysTo(date) > 0 :
+            self.stylePlan()
+            result = user.showPlanOn(f'{date.year()}-{date.month()}-{date.day()}')
+        else:
+            if date in self.qtDateFromString() and date in self.qtDateFromStringPlan():
+                result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+                #result += user.showPlanOn(f'{date.year()}-{date.month()}-{date.day()}')
+            elif date in self.qtDateFromString():
+                self.styleRecord()
+                result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+            elif date in self.qtDateFromStringPlan():
+                self.stylePlan()
+                result = user.showPlanOn(f'{date.year()}-{date.month()}-{date.day()}')
+            else: #inspect later
+                result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+        
         self.clearView()
         self.writeToTable(result)
         self.btnToggleEdit.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
@@ -374,14 +2757,17 @@ class liftLogPage(QMainWindow):
         for btn in btnList:
             btn.setStyleSheet('QPushButton {background-color: rgb(85, 170, 0);}')
             btn.setText("Submit")
-        if QDate.currentDate().daysTo(date) < 0:
+        if self.today.daysTo(date) < 0: #if past days
             self.disableData()
             self.btnToggleEdit.setEnabled(True)
-        else:   
+        elif date in self.qtDateFromStringPlan() and date != self.today:
+            self.disableData()
+            self.btnToggleEdit.setEnabled(True)
+        else:   # if days ahead
             self.enableData()
             self.btnToggleEdit.setEnabled(False)
 
-        if QDate.currentDate().daysTo(date) == 0 : 
+        if self.today.daysTo(date) == 0 : 
             self.btnToggleEdit.setEnabled(True)
 
     def onClickToggleEdit(self):
@@ -418,11 +2804,12 @@ class liftLogPage(QMainWindow):
         print(text)
         if text == "Submit":
             try:
-                self.submitRow(1,getLastSession())
+                self.submitDateRow(1,getLastSession())
                 if(firstRow[0].text() != " "):
                     self.cmbExcercise1.setEnabled(False)
                     for obj in firstRow + firstSp:
                         obj.setReadOnly(True)
+                self.cmbExcercise1.setStyleSheet('*{color: rgb(0,0,0);}')
             except: pass
         if text == "Edit":
             if(self.hiddenE1S1.text() == "-"):
@@ -447,11 +2834,12 @@ class liftLogPage(QMainWindow):
         print(text)
         if text == "Submit":
             try:
-                self.submitRow(2,getLastSession())
+                self.submitDateRow(2,getLastSession())
                 if(secondRow[0].text() != " "):
                     self.cmbExcercise2.setEnabled(False)
                     for obj in secondRow + secondSp:
                         obj.setReadOnly(True)
+                self.cmbExcercise2.setStyleSheet('*{color: rgb(0,0,0);}')
             except: pass
         if text == "Edit":
             if(self.hiddenE2S1.text() == "-"):
@@ -476,11 +2864,12 @@ class liftLogPage(QMainWindow):
         print(text)
         if text == "Submit":
             try:
-                self.submitRow(3,getLastSession())
+                self.submitDateRow(3,getLastSession())
                 if(thirdRow[0].text() != " "):
                     self.cmbExcercise3.setEnabled(False)
                     for obj in thirdRow + thirdSp:
                         obj.setReadOnly(True)
+                self.cmbExcercise3.setStyleSheet('*{color: rgb(0,0,0);}')
             except: pass
         if text == "Edit":
             if(self.hiddenE3S1.text() == "-"):
@@ -505,11 +2894,12 @@ class liftLogPage(QMainWindow):
         print(text)
         if text == "Submit":
             try:
-                self.submitRow(4,getLastSession())
+                self.submitDateRow(4,getLastSession())
                 if(fourthRow[0].text() != " "):
                     self.cmbExcercise4.setEnabled(False)
                     for obj in fourthRow + fourthSp:
                         obj.setReadOnly(True)
+                self.cmbExcercise4.setStyleSheet('*{color: rgb(0,0,0);}')
             except: pass
         if text == "Edit":
             if(self.hiddenE4S1.text() == "-"):
@@ -534,11 +2924,12 @@ class liftLogPage(QMainWindow):
         print(text)
         if text == "Submit":
             try:
-                self.submitRow(5,getLastSession())
+                self.submitDateRow(5,getLastSession())
                 if(fifthRow[0].text() != " "):
                     self.cmbExcercise5.setEnabled(False)
                     for obj in fifthRow + fifthSp:
                         obj.setReadOnly(True)
+                self.cmbExcercise5.setStyleSheet('*{color: rgb(0,0,0);}')
             except: pass
         if text == "Edit":
             if(len(self.hiddenE5S1.text()) == 0):
@@ -563,11 +2954,12 @@ class liftLogPage(QMainWindow):
         print(text)
         if text == "Submit":
             try:
-                self.submitRow(6,getLastSession())
+                self.submitDateRow(6,getLastSession())
                 if(sixthRow[0].text() != " "):
                     self.cmbExcercise6.setEnabled(False)
                     for obj in sixthRow + sixthSp:
                         obj.setReadOnly(True)
+                self.cmbExcercise6.setStyleSheet('*{color: rgb(0,0,0);}')
             except: pass
         if text == "Edit":
             if(self.hiddenE6S1.text() == "-"):
@@ -585,6 +2977,139 @@ class liftLogPage(QMainWindow):
                     self.showPopUp("Success delete data on row 6")
                 except: pass
 
+    def onClickMediaOption(self):
+        firstMedia = [self.btnMediaE1S1,self.btnMediaE1S2,self.btnMediaE1S3,self.btnMediaE1S4,self.btnMediaE1S5,self.btnMediaE1S6]
+        secondMedia = [self.btnMediaE2S1,self.btnMediaE2S2,self.btnMediaE2S3,self.btnMediaE2S4,self.btnMediaE2S5,self.btnMediaE2S6]
+        thirdMedia = [self.btnMediaE3S1,self.btnMediaE3S2,self.btnMediaE3S3,self.btnMediaE3S4,self.btnMediaE3S5,self.btnMediaE3S6]
+        fourthMedia = [self.btnMediaE4S1,self.btnMediaE4S2,self.btnMediaE4S3,self.btnMediaE4S4,self.btnMediaE4S5,self.btnMediaE4S6]
+        fifthMedia = [self.btnMediaE5S1,self.btnMediaE5S2,self.btnMediaE5S3,self.btnMediaE5S4,self.btnMediaE5S5,self.btnMediaE5S6]
+        sixthMedia = [self.btnMediaE6S1,self.btnMediaE6S2,self.btnMediaE6S3,self.btnMediaE6S4,self.btnMediaE6S5,self.btnMediaE6S6]
+        if self.mediaClick%2 == 0:
+            for btn in firstMedia + secondMedia + thirdMedia + fourthMedia + fifthMedia + sixthMedia:
+                btn.setVisible(True)
+        else:
+            for btn in firstMedia + secondMedia + thirdMedia + fourthMedia + fifthMedia + sixthMedia:
+                btn.setVisible(False)
+
+        firstHidden = [self.hiddenE1S1,self.hiddenE1S2,self.hiddenE1S3,self.hiddenE1S4,self.hiddenE1S5,self.hiddenE1S6]
+        secondHidden = [self.hiddenE2S1,self.hiddenE2S2,self.hiddenE2S3,self.hiddenE2S4,self.hiddenE2S5,self.hiddenE2S6]
+        thirdHidden = [self.hiddenE3S1,self.hiddenE3S2,self.hiddenE3S3,self.hiddenE3S4,self.hiddenE3S5,self.hiddenE3S6]
+        fourthHidden = [self.hiddenE4S1,self.hiddenE4S2,self.hiddenE4S3,self.hiddenE4S4,self.hiddenE4S5,self.hiddenE4S6]
+        fifthHidden = [self.hiddenE5S1,self.hiddenE5S2,self.hiddenE5S3,self.hiddenE5S4,self.hiddenE5S5,self.hiddenE5S6]
+        sixthHidden = [self.hiddenE6S1,self.hiddenE6S2,self.hiddenE6S3,self.hiddenE6S4,self.hiddenE6S5,self.hiddenE6S6]
+
+        for i in range(0,6):
+            try:
+                if len(Lift(firstHidden[i].text()).media) > 0:
+                    firstMedia[i].setText("Play")
+                    firstMedia[i].setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+                    print(f'IN {i}')
+                else:
+                    firstMedia[i].setText("Add Media")
+                    firstMedia[i].setStyleSheet('QPushButton {background-color: rgb(0, 170, 0);}')
+                    print(f'OUT {i}')
+            except:
+                pass
+        self.mediaClick += 1
+
+    def onClickBtnMediaE1S1(self):
+        if self.btnMediaE1S1.text() == "Play":
+            video = Lift(self.hiddenE1S1.text()).media
+            #self.showVideoOf("D:/Progress/BP 20201023 80X1.mp4")
+            self.showVideoOf(video)
+
+        else:
+            file = dialog()
+            file.openFileNameDialog()
+            id = self.hiddenE1S1.text()
+            lift = Lift(id)
+            lift.insertMedia(file.file)
+            
+            self.btnMediaE1S1.setText("Play")
+            self.btnMediaE1S1.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+
+    def onClickBtnMediaE1S2(self):
+        if self.btnMediaE1S2.text() == "Play":
+            video = Lift(self.hiddenE1S2.text()).media
+            #self.showVideoOf("D:/Progress/BP 20201023 80X1.mp4")
+            self.showVideoOf(video)
+
+        else:
+            file = dialog()
+            file.openFileNameDialog()
+            id = self.hiddenE1S2.text()
+            lift = Lift(id)
+            lift.insertMedia(file.file)
+            
+            self.btnMediaE1S2.setText("Play")
+            self.btnMediaE1S2.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+
+    def onClickBtnMediaE1S3(self):
+        if self.btnMediaE1S3.text() == "Play":
+            video = Lift(self.hiddenE1S3.text()).media
+            #self.showVideoOf("D:/Progress/BP 20201023 80X1.mp4")
+            self.showVideoOf(video)
+
+        else:
+            file = dialog()
+            file.openFileNameDialog()
+            id = self.hiddenE1S3.text()
+            lift = Lift(id)
+            lift.insertMedia(file.file)
+            
+            self.btnMediaE1S3.setText("Play")
+            self.btnMediaE1S3.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+
+    def onClickBtnMediaE1S4(self):
+        if self.btnMediaE1S4.text() == "Play":
+            video = Lift(self.hiddenE1S4.text()).media
+            #self.showVideoOf("D:/Progress/BP 20201023 80X1.mp4")
+            self.showVideoOf(video)
+
+        else:
+            file = dialog()
+            file.openFileNameDialog()
+            id = self.hiddenE1S4.text()
+            lift = Lift(id)
+            lift.insertMedia(file.file)
+            
+            self.btnMediaE1S4.setText("Play")
+            self.btnMediaE1S4.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+
+    def onClickBtnMediaE1S5(self):
+        if self.btnMediaE1S5.text() == "Play":
+            video = Lift(self.hiddenE1S5.text()).media
+            #self.showVideoOf("D:/Progress/BP 20201023 80X1.mp4")
+            self.showVideoOf(video)
+
+        else:
+            file = dialog()
+            file.openFileNameDialog()
+            id = self.hiddenE1S5.text()
+            lift = Lift(id)
+            lift.insertMedia(file.file)
+            
+            self.btnMediaE1S5.setText("Play")
+            self.btnMediaE1S5.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+
+    def onClickBtnMediaE1S6(self):
+        if self.btnMediaE1S6.text() == "Play":
+            video = Lift(self.hiddenE1S6.text()).media
+            #self.showVideoOf("D:/Progress/BP 20201023 80X1.mp4")
+            self.showVideoOf(video)
+
+        else:
+            file = dialog()
+            file.openFileNameDialog()
+            id = self.hiddenE1S6.text()
+            lift = Lift(id)
+            lift.insertMedia(file.file)
+            
+            self.btnMediaE1S6.setText("Play")
+            self.btnMediaE1S6.setStyleSheet('QPushButton {background-color: rgb(255, 201, 66);}')
+
+
+
     def showPopUp(self,message):
         msg = QMessageBox()
         msg.setWindowTitle("JournFit")
@@ -593,6 +3118,107 @@ class liftLogPage(QMainWindow):
         msg.StandardButton(QMessageBox.Ok|QMessageBox.Open)
         msg.setStyleSheet("QLabel{font-size: 20px; text-align: center;} QPushButton{ width:75px; font-size: 10px; }");
         x = msg.exec_()
+
+    def showVideoOf(self, video):
+        class VideoWindow(QMainWindow):
+
+            def __init__(self, parent=None):
+                super(VideoWindow, self).__init__(parent)
+                self.setWindowTitle("JournFit") 
+
+                self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+
+                videoWidget = QVideoWidget()
+
+                self.playButton = QPushButton()
+                self.playButton.setEnabled(False)
+                self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+                self.playButton.clicked.connect(self.play)
+
+                self.positionSlider = QSlider(Qt.Horizontal)
+                self.positionSlider.setRange(0, 0)
+                self.positionSlider.sliderMoved.connect(self.setPosition)
+
+                self.errorLabel = QLabel()
+                self.errorLabel.setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Maximum)
+                
+                # Create exit action
+                exitAction = QAction(QIcon('exit.png'), '&Exit', self)        
+                exitAction.setShortcut('Ctrl+Q')
+                exitAction.setStatusTip('Exit application')
+                exitAction.triggered.connect(self.exitCall)
+                
+                # Create a widget for window contents
+                wid = QWidget(self)
+                self.setCentralWidget(wid)
+
+                # Create layouts to place inside widget
+                controlLayout = QHBoxLayout()
+                controlLayout.setContentsMargins(0, 0, 0, 0)
+                controlLayout.addWidget(self.playButton)
+                controlLayout.addWidget(self.positionSlider)
+
+                layout = QVBoxLayout()
+                layout.addWidget(videoWidget)
+                layout.addLayout(controlLayout)
+                layout.addWidget(self.errorLabel)
+
+                # Set widget to contain window contents
+                wid.setLayout(layout)
+
+                self.mediaPlayer.setVideoOutput(videoWidget)
+                self.mediaPlayer.stateChanged.connect(self.mediaStateChanged)
+                self.mediaPlayer.positionChanged.connect(self.positionChanged)
+                self.mediaPlayer.durationChanged.connect(self.durationChanged)
+                self.mediaPlayer.error.connect(self.handleError)
+                
+                #fileName = "D:/Progress/BP 20201023 80X1.mp4"
+                self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(video)))
+                self.playButton.setEnabled(True)
+
+            def exitCall(self):
+                sys.exit(app.exec_())
+
+            def play(self):
+                if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+                    self.mediaPlayer.pause()
+                else:
+                    self.mediaPlayer.play()
+
+            def mediaStateChanged(self, state):
+                if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+                    self.playButton.setIcon(
+                            self.style().standardIcon(QStyle.SP_MediaPause))
+                else:
+                    self.playButton.setIcon(
+                            self.style().standardIcon(QStyle.SP_MediaPlay))
+
+            def positionChanged(self, position):
+                self.positionSlider.setValue(position)
+
+            def durationChanged(self, duration):
+                self.positionSlider.setRange(0, duration)
+
+            def setPosition(self, position):
+                self.mediaPlayer.setPosition(position)
+
+            def handleError(self):
+                self.playButton.setEnabled(False)
+                self.errorLabel.setText("Error: " + self.mediaPlayer.errorString())
+
+        loop = QEventLoop() 
+        video = VideoWindow()
+        video.resize(640, 480)
+        video.show()
+        loop.exec()
+
+        #app = QApplication(sys.argv)
+        #videoplayer = VideoPlayer()
+        #videoplayer.resize(640, 480)
+        #videoplayer.show()
+        #QCoreApplication.processEvents()
+        #sys.exit(app.exec_())
+
 
     def returnRowData(self, row, user_id):
         row1 = [self.cmbExcercise1, self.txtWeightE1S1, self.spinBoxE1S1, self.hiddenE1S1, self.txtWeightE1S2, self.spinBoxE1S2, self.hiddenE1S2,
@@ -638,36 +3264,71 @@ class liftLogPage(QMainWindow):
         return rowMaster
 
     def submitRow(self, row, user_id):
+        print("Submit")
         rowMaster = self.returnRowData(row, user_id)
-        for row in rowMaster:
-            lift = Lift(row[0], row[1], row[2], row[3], row[4], row[5])
-            lift.addLift()
-        print(rowMaster)
+        if self.today.daysTo(self.dateSelect) > 0:
+            print("Plan Add")
+            for row in rowMaster:
+                plan = Plan(row[0], row[1], row[2], row[3], row[4], row[5])
+                plan.addPlan()
+            print("Plan Add")
+            print(rowMaster)
+        else:
+            print("Lift Add")
+            for row in rowMaster:
+                lift = Lift(row[0], row[1], row[2], row[3], row[4], row[5])
+                lift.addLift()
+            print("Lift Add")
+            print(rowMaster)
 
     def submitDateRow(self, row, user_id):
+        print("Submit Date")
         rowMaster = self.returnRowData(row, user_id)
         date = self.calendarWidget.selectedDate()
         selDate = f'{date.year()}-{date.month()}-{date.day()}'
         print(selDate)
-        for row in rowMaster:
-            print(row)
-            try:
-                lift = Lift(row[0], row[1], selDate, row[2], row[3], row[4], row[5])
-                lift.addLift()
-            except Exception as ex:
-                msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
-                print(msg)
-        print(rowMaster)
+        if self.today.daysTo(self.dateSelect) > 0:
+            for row in rowMaster:
+                print(row)
+                try:
+                    plan = Plan(row[0], row[1], selDate, row[2], row[3], row[4], row[5])
+                    plan.addPlan()
+                except Exception as ex:
+                    msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+                    print(msg)
+            print("Plan Add")
+            print(rowMaster)
+        else:
+            for row in rowMaster:
+                print(row)
+                try:
+                    lift = Lift(row[0], row[1], selDate, row[2], row[3], row[4], row[5])
+                    lift.addLift()
+                except Exception as ex:
+                    msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+                    print(msg)
+            print("Lift Add")
+            print(rowMaster)
+        self.initCalendar()
 
     def editRow(self, row, user_id):
         rowMaster = self.returnRowData(row, user_id)
-        for row in rowMaster:
-            try:
-                lift = Lift(row[6])
-                lift.updateLift(row[1], row[2], row[3], row[4], row[5])
-            except Exception as ex:
-                msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
-                print(msg)
+        if self.today.daysTo(self.dateSelect) > 0:
+            for row in rowMaster:
+                try:
+                    plan = Plan(row[6])
+                    plan.updatePlan(row[1], row[2], row[3], row[4], row[5])
+                except Exception as ex:
+                    msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+                    print(msg)
+        else:
+            for row in rowMaster:
+                try:
+                    lift = Lift(row[6])
+                    lift.updateLift(row[1], row[2], row[3], row[4], row[5])
+                except Exception as ex:
+                    msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+                    print(msg)
 
         date = self.calendarWidget.selectedDate()        
         user = User(getLastSession())
@@ -675,22 +3336,40 @@ class liftLogPage(QMainWindow):
         #result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
         self.clearView()
         self.writeToTable(result)
+        self.initCalendar()
 
     def deleteRow(self, row, user_id):
         rowMaster = self.returnRowData(row, user_id)
-        for row in rowMaster:
-            try:
-                lift = Lift(row[6])
-                lift.deleteLift()
-                #deleteLift(row[6])
-                #print(row[6])
-            except Exception as ex:
-                msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
-                print(msg)
+        if self.today.daysTo(self.dateSelect) > 0:
+            for row in rowMaster:
+                try:
+                    plan = Plan(row[6])
+                    plan.deletePlan()
+                    #deleteLift(row[6])
+                    #print(row[6])
+                except Exception as ex:
+                    msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+                    print(msg)
+        else:
+            for row in rowMaster:
+                try:
+                    lift = Lift(row[6])
+                    lift.deleteLift()
+                    #deleteLift(row[6])
+                    #print(row[6])
+                except Exception as ex:
+                    msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+                    print(msg)
         
         date = self.calendarWidget.selectedDate()
         user = User(getLastSession())
-        result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')        
+        # == 0 need attention
+        if self.today.daysTo(date) < 0 :
+            result = user.showRecordOn(f'{date.year()}-{date.month()}-{date.day()}')
+        elif self.today.daysTo(date) > 0 :
+            result = user.showPlanOn(f'{date.year()}-{date.month()}-{date.day()}')
+        else:
+            pass
         #result = showRecordOf(f'{date.year()}-{date.month()}-{date.day()}',getLastSession())
         self.clearView()
         self.writeToTable(result)
@@ -716,6 +3395,12 @@ class liftLogPage(QMainWindow):
         fourthHidden = [self.hiddenE4S1,self.hiddenE4S2,self.hiddenE4S3,self.hiddenE4S4,self.hiddenE4S5,self.hiddenE4S6]
         fifthHidden = [self.hiddenE5S1,self.hiddenE5S2,self.hiddenE5S3,self.hiddenE5S4,self.hiddenE5S5,self.hiddenE5S6]
         sixthHidden = [self.hiddenE6S1,self.hiddenE6S2,self.hiddenE6S3,self.hiddenE6S4,self.hiddenE6S5,self.hiddenE6S6]
+        firstMedia = [self.btnMediaE1S1,self.btnMediaE1S2,self.btnMediaE1S3,self.btnMediaE1S4,self.btnMediaE1S5,self.btnMediaE1S6]
+        secondMedia = [self.btnMediaE2S1,self.btnMediaE2S2,self.btnMediaE2S3,self.btnMediaE2S4,self.btnMediaE2S5,self.btnMediaE2S6]
+        thirdMedia = [self.btnMediaE3S1,self.btnMediaE3S2,self.btnMediaE3S3,self.btnMediaE3S4,self.btnMediaE3S5,self.btnMediaE3S6]
+        fourthMedia = [self.btnMediaE4S1,self.btnMediaE4S2,self.btnMediaE4S3,self.btnMediaE4S4,self.btnMediaE4S5,self.btnMediaE4S6]
+        fifthMedia = [self.btnMediaE5S1,self.btnMediaE5S2,self.btnMediaE5S3,self.btnMediaE5S4,self.btnMediaE5S5,self.btnMediaE5S6]
+        sixthMedia = [self.btnMediaE6S1,self.btnMediaE6S2,self.btnMediaE6S3,self.btnMediaE6S4,self.btnMediaE6S5,self.btnMediaE6S6]
         for cmb in cmbExcList:
             cmb.setCurrentIndex(-1)
         for r in firstRow + secondRow + thirdRow + fourthRow + fifthRow + sixthRow:
@@ -724,6 +3409,9 @@ class liftLogPage(QMainWindow):
             sp.setValue(0)
         for hd in firstHidden + secondHidden + thirdHidden + fourthHidden + fifthHidden + sixthHidden:
             hd.setText("-")
+        for btn in firstMedia + secondMedia + thirdMedia + fourthMedia + fifthMedia + sixthMedia:
+            btn.setVisible(False)
+        self.mediaClick = 0
 
     def gotoTDEE(self):
         tdee = tdeePage()
@@ -750,6 +3438,21 @@ class liftLogPage(QMainWindow):
         widget.addWidget(login)
         widget.setCurrentWidget(login) 
     
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
     def writeToTable(self, result):
         cmbExcList = [self.cmbExcercise1,self.cmbExcercise2,self.cmbExcercise3,self.cmbExcercise4,self.cmbExcercise5,self.cmbExcercise6]
         firstRow = [self.txtWeightE1S1, self.txtWeightE1S2, self.txtWeightE1S3, self.txtWeightE1S4, self.txtWeightE1S5, self.txtWeightE1S6]
@@ -812,6 +3515,16 @@ class liftLogPage(QMainWindow):
             hd.setVisible(False)
         print(rows)
 
+    def stylePlan(self):
+        cmbExcList = [self.cmbExcercise1,self.cmbExcercise2,self.cmbExcercise3,self.cmbExcercise4,self.cmbExcercise5,self.cmbExcercise6]
+        for c in cmbExcList:
+            c.setStyleSheet('*{color: rgb(98,145,255);}')
+
+    def styleRecord(self):
+        cmbExcList = [self.cmbExcercise1,self.cmbExcercise2,self.cmbExcercise3,self.cmbExcercise4,self.cmbExcercise5,self.cmbExcercise6]
+        for c in cmbExcList:
+            c.setStyleSheet('*{color: rgb(0,0,0);}')
+
     def disableData(self):
         cmbExcList = [self.cmbExcercise1,self.cmbExcercise2,self.cmbExcercise3,self.cmbExcercise4,self.cmbExcercise5,self.cmbExcercise6]
         firstRow = [self.txtWeightE1S1, self.txtWeightE1S2, self.txtWeightE1S3, self.txtWeightE1S4, self.txtWeightE1S5, self.txtWeightE1S6]
@@ -866,6 +3579,9 @@ class tdeePage(QMainWindow):
     def __init__(self):
         super(tdeePage, self).__init__()
         loadUi("TDEE.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
         
         self.initNav()
         self.initConnection()
@@ -875,6 +3591,10 @@ class tdeePage(QMainWindow):
     def initConnection(self):
         self.btnToggle.clicked.connect(self.slideToRight)
         self.btnRecalculate.clicked.connect(self.initTDEE)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnHome.clicked.connect(self.gotoHome)
 
     def initHeader(self):
         user = User(getLastSession())
@@ -986,49 +3706,94 @@ class tdeePage(QMainWindow):
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
         icon0 = QIcon(pxm0)
-        self.btnToggle.setIcon(icon0)
         pxm1 = QPixmap("img/homeWhiteColor24Px.png")
         icon1 = QIcon(pxm1)
-        self.btnHome.setIcon(icon1)
         pxm2 = QPixmap("img/userWhiteColor24Px.png")
         icon2 = QIcon(pxm2)
-        self.btnLiftLog.setIcon(icon2)
-        pxm3 = QPixmap("img/settingsWhiteColor24Px.png")
+        pxm3 = QPixmap("img/document.png")
         icon3 = QIcon(pxm3)
-        self.btnTDEE.setIcon(icon3)
-        self.btnLiftStats.setIcon(icon3)
-        self.btnLiftRecord.setIcon(icon3)
-        self.btnMuscleStats.setIcon(icon3)
-        self.btnStrengthStandard.setIcon(icon3)
-        self.btnAccount.setIcon(icon3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
 
         self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
         self.btnHome.setText("")
         self.btnLiftLog.setText("")
         self.btnTDEE.setText("")
         self.btnLiftStats.setText("")
         self.btnLiftRecord.setText("")
-        self.btnMuscleStats.setText("")
         self.btnStrengthStandard.setText("")
         self.btnAccount.setText("")
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
 
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
         self.btnLiftStats.clicked.connect(self.gotoLiftStats)
         self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
-
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+    
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
@@ -1037,9 +3802,13 @@ class tdeePage(QMainWindow):
             self.btnTDEE.setText("TDEE Stats")
             self.btnLiftStats.setText("Lift Stats")
             self.btnLiftRecord.setText("Lift Record")
-            self.btnMuscleStats.setText("Muscle Stats")
             self.btnStrengthStandard.setText("Strength Standard")
             self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
             newWidth = 225
         else:
             self.btnHome.setText("")
@@ -1047,9 +3816,13 @@ class tdeePage(QMainWindow):
             self.btnTDEE.setText("")
             self.btnLiftStats.setText("")
             self.btnLiftRecord.setText("")
-            self.btnMuscleStats.setText("")
             self.btnStrengthStandard.setText("")
             self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -1058,6 +3831,26 @@ class tdeePage(QMainWindow):
         self.animation.setEndValue(newWidth)
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
+
+    def snapImg(self):
+        rectangle = QRect(QPoint(89, 122), QSize(1338, 831))
+        pxm = self.grab(rectangle)
+        pxm.save("screenshot/tdee.png")
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
 
     def gotoLiftLog(self):
         liftLog = liftLogPage()
@@ -1079,13 +3872,37 @@ class tdeePage(QMainWindow):
         widget.addWidget(strengthSt)
         widget.setCurrentWidget(strengthSt)
 
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc)
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+
 class liftStatsPage(QMainWindow):
     def __init__(self):
         super(liftStatsPage, self).__init__()
         loadUi("liftStats.ui", self)
 
+        self.user = User(getLastSession())
+        self.settingClick = 0
         self.btnToggle.clicked.connect(self.slideToRight)
         self.initNav()
+        self.initConnection()
         self.writeData()
         #clear view and try except the func
 
@@ -1094,48 +3911,99 @@ class liftStatsPage(QMainWindow):
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
         icon0 = QIcon(pxm0)
-        self.btnToggle.setIcon(icon0)
         pxm1 = QPixmap("img/homeWhiteColor24Px.png")
         icon1 = QIcon(pxm1)
-        self.btnHome.setIcon(icon1)
         pxm2 = QPixmap("img/userWhiteColor24Px.png")
         icon2 = QIcon(pxm2)
-        self.btnLiftLog.setIcon(icon2)
-        pxm3 = QPixmap("img/settingsWhiteColor24Px.png")
+        pxm3 = QPixmap("img/document.png")
         icon3 = QIcon(pxm3)
-        self.btnTDEE.setIcon(icon3)
-        self.btnLiftStats.setIcon(icon3)
-        self.btnLiftRecord.setIcon(icon3)
-        self.btnMuscleStats.setIcon(icon3)
-        self.btnStrengthStandard.setIcon(icon3)
-        self.btnAccount.setIcon(icon3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
 
         self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
         self.btnHome.setText("")
         self.btnLiftLog.setText("")
         self.btnTDEE.setText("")
         self.btnLiftStats.setText("")
         self.btnLiftRecord.setText("")
-        self.btnMuscleStats.setText("")
         self.btnStrengthStandard.setText("")
         self.btnAccount.setText("")
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
 
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def initConnection(self):
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnHome.clicked.connect(self.gotoHome)
 
     def writeData(self): #update the func query later
         user = User(getLastSession())
@@ -1313,6 +4181,11 @@ class liftStatsPage(QMainWindow):
         elif score >= 30 : return "Untrained"
         return "Subpar"
 
+    def snapImg(self):
+        rectangle = QRect(QPoint(89, 122), QSize(1338, 831))
+        pxm = self.grab(rectangle)
+        pxm.save("screenshot/liftstats.png")
+
     def slideToRight(self):
         width = self.LeftSideMenu.width()
         if width <= 100 :
@@ -1321,9 +4194,13 @@ class liftStatsPage(QMainWindow):
             self.btnTDEE.setText("TDEE Stats")
             self.btnLiftStats.setText("Lift Stats")
             self.btnLiftRecord.setText("Lift Record")
-            self.btnMuscleStats.setText("Muscle Stats")
             self.btnStrengthStandard.setText("Strength Standard")
             self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
             newWidth = 225
         else:
             self.btnHome.setText("")
@@ -1331,9 +4208,13 @@ class liftStatsPage(QMainWindow):
             self.btnTDEE.setText("")
             self.btnLiftStats.setText("")
             self.btnLiftRecord.setText("")
-            self.btnMuscleStats.setText("")
             self.btnStrengthStandard.setText("")
             self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -1342,6 +4223,21 @@ class liftStatsPage(QMainWindow):
         self.animation.setEndValue(newWidth)
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
 
     def gotoLiftLog(self):
         liftLog = liftLogPage()
@@ -1363,59 +4259,220 @@ class liftStatsPage(QMainWindow):
         widget.addWidget(strengthSt)
         widget.setCurrentWidget(strengthSt)
 
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+
 class liftRecordPage(QMainWindow):
     def __init__(self):
         super(liftRecordPage, self).__init__()
         loadUi("liftRecord.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+
         self.btnToggle.clicked.connect(self.slideToRight)
         self.initNav()
         self.writeData()
+        self.plotChart()
 
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
         icon0 = QIcon(pxm0)
-        self.btnToggle.setIcon(icon0)
         pxm1 = QPixmap("img/homeWhiteColor24Px.png")
         icon1 = QIcon(pxm1)
-        self.btnHome.setIcon(icon1)
         pxm2 = QPixmap("img/userWhiteColor24Px.png")
         icon2 = QIcon(pxm2)
-        self.btnLiftLog.setIcon(icon2)
-        pxm3 = QPixmap("img/settingsWhiteColor24Px.png")
+        pxm3 = QPixmap("img/document.png")
         icon3 = QIcon(pxm3)
-        self.btnTDEE.setIcon(icon3)
-        self.btnLiftStats.setIcon(icon3)
-        self.btnLiftRecord.setIcon(icon3)
-        self.btnMuscleStats.setIcon(icon3)
-        self.btnStrengthStandard.setIcon(icon3)
-        self.btnAccount.setIcon(icon3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
 
         self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
         self.btnHome.setText("")
         self.btnLiftLog.setText("")
         self.btnTDEE.setText("")
         self.btnLiftStats.setText("")
         self.btnLiftRecord.setText("")
-        self.btnMuscleStats.setText("")
         self.btnStrengthStandard.setText("")
         self.btnAccount.setText("")
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
 
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftStats.clicked.connect(self.gotoLiftStats)
         self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnHome.clicked.connect(self.gotoHome)
+
+    def plotChart(self):
+        self.radioBS.toggled.connect(self.clickedBS)
+        self.radioFS.toggled.connect(self.clickedFS)
+        self.radioDL.toggled.connect(self.clickedDL)
+        self.radioSDL.toggled.connect(self.clickedSDL)
+        self.radioBP.toggled.connect(self.clickedBP)
+        self.radioIBP.toggled.connect(self.clickedIBP)
+        self.radioOHP.toggled.connect(self.clickedOHP)
+    
+    def clickedBS(self):
+        r = repMaxHistoryOf("BS",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
+
+    def clickedFS(self):
+        r = repMaxHistoryOf("FS",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
+
+    def clickedDL(self):
+        r = repMaxHistoryOf("DL",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
+
+    def clickedSDL(self):
+        r = repMaxHistoryOf("SDL",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
+
+    def clickedBP(self):
+        r = repMaxHistoryOf("BP",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
+
+    def clickedIBP(self):
+        r = repMaxHistoryOf("IBP",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
+
+    def clickedOHP(self):
+        r = repMaxHistoryOf("OHP",self.user.userID)
+        img = plotToImage(r)
+        imgQ = ImageQt(img)
+        pxm = QPixmap.fromImage(imgQ)
+        pxm1 = pxm.scaledToWidth(1071)
+        pxm2 = pxm.scaledToHeight(401)
+        #pxm2 = pxm.scaled(1071, 401, Qt.KeepAspectRatio)
+        self.labelChart.setPixmap(pxm2)
+        r.close()
 
     def writeData(self):
         user = User(getLastSession())
@@ -1517,9 +4574,13 @@ class liftRecordPage(QMainWindow):
             self.btnTDEE.setText("TDEE Stats")
             self.btnLiftStats.setText("Lift Stats")
             self.btnLiftRecord.setText("Lift Record")
-            self.btnMuscleStats.setText("Muscle Stats")
             self.btnStrengthStandard.setText("Strength Standard")
             self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
             newWidth = 225
         else:
             self.btnHome.setText("")
@@ -1527,9 +4588,13 @@ class liftRecordPage(QMainWindow):
             self.btnTDEE.setText("")
             self.btnLiftStats.setText("")
             self.btnLiftRecord.setText("")
-            self.btnMuscleStats.setText("")
             self.btnStrengthStandard.setText("")
             self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -1538,6 +4603,26 @@ class liftRecordPage(QMainWindow):
         self.animation.setEndValue(newWidth)
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
+
+    def snapImg(self):
+        rectangle = QRect(QPoint(89, 122), QSize(1338, 371))
+        pxm = self.grab(rectangle)
+        pxm.save("screenshot/liftrecord.png")
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
 
     def gotoLiftLog(self):
         liftLog = liftLogPage()
@@ -1559,33 +4644,91 @@ class liftRecordPage(QMainWindow):
         widget.addWidget(strengthSt)
         widget.setCurrentWidget(strengthSt)
 
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc)
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+
 class strengthStandardPage(QMainWindow):
     def __init__(self):
         super(strengthStandardPage, self).__init__()
         loadUi("strengthStandard.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+
         self.btnToggle.clicked.connect(self.slideToRight)
         self.initNav()
+        self.initConnection()
 
     def initNav(self):
         pxm0 = QPixmap("img/menuWhiteColor24Px.png")
         icon0 = QIcon(pxm0)
-        self.btnToggle.setIcon(icon0)
         pxm1 = QPixmap("img/homeWhiteColor24Px.png")
         icon1 = QIcon(pxm1)
-        self.btnHome.setIcon(icon1)
         pxm2 = QPixmap("img/userWhiteColor24Px.png")
         icon2 = QIcon(pxm2)
-        self.btnLiftLog.setIcon(icon2)
-        pxm3 = QPixmap("img/settingsWhiteColor24Px.png")
+        pxm3 = QPixmap("img/document.png")
         icon3 = QIcon(pxm3)
-        self.btnTDEE.setIcon(icon3)
-        self.btnLiftStats.setIcon(icon3)
-        self.btnLiftRecord.setIcon(icon3)
-        self.btnMuscleStats.setIcon(icon3)
-        self.btnStrengthStandard.setIcon(icon3)
-        self.btnAccount.setIcon(icon3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
         pxm4 = QPixmap("img/Tulisan JournFit-01.png")
         self.appLogo.setPixmap(pxm4)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
 
         self.btnToggle.setStyleSheet('*{text-align: center}')
         self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
@@ -1593,24 +4736,46 @@ class strengthStandardPage(QMainWindow):
         self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnMuscleStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
-        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
         self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setText(self.user.name)
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
 
         self.btnHome.setText("")
         self.btnLiftLog.setText("")
         self.btnTDEE.setText("")
         self.btnLiftStats.setText("")
         self.btnLiftRecord.setText("")
-        self.btnMuscleStats.setText("")
         self.btnStrengthStandard.setText("")
         self.btnAccount.setText("")
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
 
         #connection
         self.btnLiftLog.clicked.connect(self.gotoLiftLog)
         self.btnTDEE.clicked.connect(self.gotoTDEE)
         self.btnLiftStats.clicked.connect(self.gotoLiftStats)
         self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnAccount.clicked.connect(self.gotoAccount)
+        clickable(self.profileName).connect(self.gotoAccount)
+        clickable(self.profileFoto).connect(self.gotoAccount)
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnHome.clicked.connect(self.gotoHome)
 
     def slideToRight(self):
         width = self.LeftSideMenu.width()
@@ -1620,9 +4785,13 @@ class strengthStandardPage(QMainWindow):
             self.btnTDEE.setText("TDEE Stats")
             self.btnLiftStats.setText("Lift Stats")
             self.btnLiftRecord.setText("Lift Record")
-            self.btnMuscleStats.setText("Muscle Stats")
             self.btnStrengthStandard.setText("Strength Standard")
             self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
             newWidth = 225
         else:
             self.btnHome.setText("")
@@ -1630,9 +4799,13 @@ class strengthStandardPage(QMainWindow):
             self.btnTDEE.setText("")
             self.btnLiftStats.setText("")
             self.btnLiftRecord.setText("")
-            self.btnMuscleStats.setText("")
             self.btnStrengthStandard.setText("")
             self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
             newWidth = 50
 
         self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
@@ -1641,6 +4814,21 @@ class strengthStandardPage(QMainWindow):
         self.animation.setEndValue(newWidth)
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
 
     def gotoLiftLog(self):
         liftLog = liftLogPage()
@@ -1662,18 +4850,365 @@ class strengthStandardPage(QMainWindow):
         widget.addWidget(liftrecord)
         widget.setCurrentWidget(liftrecord)
 
+    def gotoAccount(self):
+        acc = accountPage()
+        widget.addWidget(acc)
+        widget.setCurrentWidget(acc) 
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
+
+class accountPage(QMainWindow):
+    def __init__(self):
+        super(accountPage, self).__init__()
+        loadUi("Account.ui", self)
+
+        self.user = User(getLastSession())
+        self.settingClick = 0
+
+        self.initNav()
+        self.initConnection()
+        self.initAccount()
+        #self.sentToEmail()
+        #self.exportToPDF()
+
+        self.btnEdit.setText("Edit") 
+        self.btnEdit.setStyleSheet('QPushButton {background-color: rgb(17, 140, 255);}')
+        self.disableData()
+
+    def initNav(self):
+        pxm0 = QPixmap("img/menuWhiteColor24Px.png")
+        icon0 = QIcon(pxm0)
+        pxm1 = QPixmap("img/homeWhiteColor24Px.png")
+        icon1 = QIcon(pxm1)
+        pxm2 = QPixmap("img/userWhiteColor24Px.png")
+        icon2 = QIcon(pxm2)
+        pxm3 = QPixmap("img/document.png")
+        icon3 = QIcon(pxm3)
+        pxm4 = QPixmap("img/analytics.png")
+        icon4 = QIcon(pxm4)
+        pxm5 = QPixmap("img/bar-chart.png")
+        icon5 = QIcon(pxm5)
+        pxm6 = QPixmap("img/list.png")
+        icon6 = QIcon(pxm6)
+        pxm7 = QPixmap("img/meal.png")
+        icon7 = QIcon(pxm7)
+        self.btnToggle.setIcon(icon0)
+        self.btnHome.setIcon(icon1)
+        self.btnLiftLog.setIcon(icon3)
+        self.btnTDEE.setIcon(icon7)
+        self.btnLiftStats.setIcon(icon4)
+        self.btnLiftRecord.setIcon(icon6)
+        self.btnStrengthStandard.setIcon(icon5)
+        self.btnAccount.setIcon(icon2)
+        pxm4 = QPixmap("img/Tulisan JournFit-01.png")
+        self.appLogo.setPixmap(pxm4)
+        if self.user.image == "":
+            pxmFoto = QPixmap("img/user.png")
+            self.profileFoto.setPixmap(pxmFoto)
+            self.labelFP.setPixmap(pxmFoto)
+        else:
+            pxmFoto = QPixmap(self.user.image)
+            self.profileFoto.setPixmap(pxmFoto)
+            self.labelFP.setPixmap(pxmFoto)
+        pxm6 = QPixmap("img/logoutWhite.png")
+        icon6 = QIcon(pxm6)
+        self.btnEdit.setIcon(icon6)
+        pxm5 = QPixmap("img/camera.png")
+        icon5 = QIcon(pxm5)
+        self.btnChangeFP.setIcon(icon5)
+        pxm7 = QPixmap("img/logout.png")
+        icon7 = QIcon(pxm7)
+        self.btnLogout.setIcon(icon7)
+        pxm8 = QPixmap("img/padlock.png")
+        icon8 = QIcon(pxm8)
+        self.btnChangePsw.setIcon(icon8)
+        pxm9 = QPixmap("img/settingsWhiteColor24Px.png")
+        icon9 = QIcon(pxm9)
+        self.btnSettings.setIcon(icon9)
+        pxm10 = QPixmap("img/pdf.png")
+        icon10 = QIcon(pxm10)
+        self.btnToPDF.setIcon(icon10)
+        pxm11 = QPixmap("img/mail.png")
+        icon11 = QIcon(pxm11)
+        self.btnToEmail.setIcon(icon11)
+        self.btnLogout.setVisible(False)
+        self.btnChangePsw.setVisible(False)
+        self.btnToPDF.setVisible(False)
+        self.btnToEmail.setVisible(False)
+
+        self.btnToggle.setStyleSheet('*{text-align: center}')
+        self.btnHome.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftLog.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnTDEE.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftStats.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLiftRecord.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnStrengthStandard.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnAccount.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(4, 155, 255); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnSettings.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToPDF.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnToEmail.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnChangePsw.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.btnLogout.setStyleSheet('QPushButton{padding-left: 15px;}*{text-align: left; background-color: rgb(3, 114, 188); border:none; border-radius : 10px; color: rgb(255, 255, 255); padding : 20px 5px;}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setStyleSheet('*{border-radius : 10px; color: rgb(255, 255, 255);}*:hover {background-color: rgb(4, 155, 255);}')
+        self.profileName.setText(self.user.name)
+        
+        self.btnHome.setText("")
+        self.btnLiftLog.setText("")
+        self.btnTDEE.setText("")
+        self.btnLiftStats.setText("")
+        self.btnLiftRecord.setText("")
+        self.btnStrengthStandard.setText("")
+        self.btnAccount.setText("")
+        self.btnSettings.setText("")
+        self.btnToPDF.setText("")
+        self.btnToEmail.setText("")
+        self.btnChangePsw.setText("")
+        self.btnLogout.setText("")
+
+        #connection
+        self.btnLiftLog.clicked.connect(self.gotoLiftLog)
+        self.btnTDEE.clicked.connect(self.gotoTDEE)
+        self.btnLiftStats.clicked.connect(self.gotoLiftStats)
+        self.btnLiftRecord.clicked.connect(self.gotoLiftRecord)
+        self.btnStrengthStandard.clicked.connect(self.gotoStrengthStandard)
+
+    def initConnection(self):
+        self.btnToggle.clicked.connect(self.slideToRight)
+        self.btnChangePsw.clicked.connect(self.gotoChangePsw)
+        self.btnLogout.clicked.connect(self.gotoLogin)
+        self.btnEdit.clicked.connect(self.onClickBtnEdit)
+        self.btnChangeFP.clicked.connect(self.onClickBtnChangeFP)
+        self.btnSettings.clicked.connect(self.onClickBtnSettings)
+        self.btnToPDF.clicked.connect(exportToPDF)
+        self.btnToEmail.clicked.connect(sentToEmail)
+        self.btnHome.clicked.connect(self.gotoHome)
+
+    def initAccount(self):
+        d = self.user.dateOfBirth.strftime("%Y-%m-%d")
+        date = QDate.fromString(d, "yyyy-MM-dd")
+        day = {1:"Monday", 2:"Tuesday", 3:"Wednesday", 4:"Thursday", 5:"Friday", 6:"Saturday", 7:"Monday"}
+        recordCount = countRecordOf(self.user.userID)
+        sessionCount = countLoginOf(self.user.userID)
+        pswchgCount = countPswChangeOf(self.user.userID)
+        last5Session = getLastFiveSession(self.user.userID)
+        last5Record = getLastFiveRecord(self.user.userID)
+
+        self.txtFullname.setText(self.user.fullname)
+        self.txtName.setText(self.user.name)
+        self.txtEmail.setText(self.user.email)
+        self.cmbDate.setCurrentIndex(date.day())
+        self.cmbMonth.setCurrentIndex(date.month())
+        self.cmbYear.setCurrentText(str(date.year()))
+        self.txtHeight.setText(f'{self.user.height} cm')
+        self.txtWeight.setText(f'{self.user.weight} kg')
+        self.txtBodyfat.setText(f'{self.user.bodyfat} %')
+        self.cmbExperience.setCurrentIndex(self.user.experience)
+        self.cmbActivity.setCurrentIndex(self.user.activity)
+        self.txtRecordCount.setText(str(recordCount))
+        self.txtLoginCount.setText(str(sessionCount))
+        self.txtPswchgCount.setText(str(pswchgCount))
+
+        self.txtSession1.setText(last5Session[0])
+        self.txtSession2.setText(last5Session[1])
+        self.txtSession3.setText(last5Session[2])
+        self.txtSession4.setText(last5Session[3])
+        self.txtSession5.setText(last5Session[4])
+
+        try:
+            self.txtRecord1.setText(last5Record[0] + ", " + day[QDate.fromString(last5Record[0], "yyyy-MM-dd").dayOfWeek()])
+            self.txtRecord2.setText(last5Record[1] + ", " + day[QDate.fromString(last5Record[1], "yyyy-MM-dd").dayOfWeek()])
+            self.txtRecord3.setText(last5Record[2] + ", " + day[QDate.fromString(last5Record[2], "yyyy-MM-dd").dayOfWeek()])
+            self.txtRecord4.setText(last5Record[3] + ", " + day[QDate.fromString(last5Record[3], "yyyy-MM-dd").dayOfWeek()])
+            self.txtRecord5.setText(last5Record[4] + ", " + day[QDate.fromString(last5Record[4], "yyyy-MM-dd").dayOfWeek()])
+        except:
+            self.txtRecord1.setText(last5Record[0])
+            self.txtRecord2.setText(last5Record[1])
+            self.txtRecord3.setText(last5Record[2])
+            self.txtRecord4.setText(last5Record[3])
+            self.txtRecord5.setText(last5Record[4])
+
+    def slideToRight(self):
+        width = self.LeftSideMenu.width()
+        if width <= 100 :
+            self.btnHome.setText("Home")
+            self.btnLiftLog.setText("Lift Log")
+            self.btnTDEE.setText("TDEE Stats")
+            self.btnLiftStats.setText("Lift Stats")
+            self.btnLiftRecord.setText("Lift Record")
+            self.btnStrengthStandard.setText("Strength Standard")
+            self.btnAccount.setText("Account")
+            self.btnSettings.setText("Settings")
+            self.btnToPDF.setText("Export To PDF")
+            self.btnToEmail.setText("Sent To Email")
+            self.btnChangePsw.setText("Change Password")
+            self.btnLogout.setText("Logout")
+            newWidth = 225
+        else:
+            self.btnHome.setText("")
+            self.btnLiftLog.setText("")
+            self.btnTDEE.setText("")
+            self.btnLiftStats.setText("")
+            self.btnLiftRecord.setText("")
+            self.btnStrengthStandard.setText("")
+            self.btnAccount.setText("")
+            self.btnSettings.setText("")
+            self.btnToPDF.setText("")
+            self.btnToEmail.setText("")
+            self.btnChangePsw.setText("")
+            self.btnLogout.setText("")
+            newWidth = 50
+
+        self.animation = QPropertyAnimation(self.LeftSideMenu, b"minimumWidth")
+        self.animation.setDuration(500)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(newWidth)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+    def onClickBtnSettings(self):
+        self.settingClick += 1
+        if self.settingClick%2 == 0:
+            self.btnLogout.setVisible(False)
+            self.btnChangePsw.setVisible(False)
+            self.btnToPDF.setVisible(False)
+            self.btnToEmail.setVisible(False)
+            self.slideToRight()
+        else:
+            self.btnLogout.setVisible(True)
+            self.btnChangePsw.setVisible(True)
+            self.btnToPDF.setVisible(True)
+            self.btnToEmail.setVisible(True)
+            self.slideToRight()
+
+    def onClickBtnEdit(self):
+        self.toggleEdit += 1
+        fullname = self.txtFullname.text()
+        name = self.txtName.text()
+        email = self.txtEmail.text()
+        dobDay = self.cmbDate.currentText()
+        dobMonth = self.cmbMonth.currentIndex()
+        dobYear = self.cmbYear.currentText()
+        weight = self.txtWeight.text().strip(" kg")
+        height = self.txtHeight.text().strip(" cm")
+        bf = self.txtBodyfat.text().strip(" %")
+        exp = self.cmbExperience.currentIndex()
+        activity = self.cmbActivity.currentIndex()
+        if self.toggleEdit % 2 == 1 :
+            self.enableData()
+            self.btnEdit.setText("Submit")
+            self.btnEdit.setStyleSheet('QPushButton {background-color: rgb(85, 170, 0);}')
+        else :
+            self.btnEdit.setText("Edit") 
+            self.btnEdit.setStyleSheet('QPushButton {background-color: rgb(17, 140, 255);}')
+            self.disableData()
+            self.user.updateUser(fullname, name, email, dobDay, dobMonth, dobYear, weight, height, bf, exp, activity)
+
+    def onClickBtnChangeFP(self):
+        file = dialog()
+        file.openFileNameDialog()
+        self.user.insertImage(file.file)
+        pxmFoto = QPixmap(file.file)
+        self.profileFoto.setPixmap(pxmFoto)
+        self.labelFP.setPixmap(pxmFoto)
+
+    def enableData(self):
+        self.txtFullname.setReadOnly(False)
+        self.txtName.setReadOnly(False)
+        self.txtEmail.setReadOnly(False)
+        self.cmbDate.setEnabled(True)
+        self.cmbMonth.setEnabled(True)
+        self.cmbYear.setEnabled(True)
+        self.txtHeight.setReadOnly(False)
+        self.txtWeight.setReadOnly(False)
+        self.txtBodyfat.setReadOnly(False)
+        self.cmbExperience.setEnabled(True)
+        self.cmbActivity.setEnabled(True)
+
+    def disableData(self):
+        self.txtFullname.setReadOnly(True)
+        self.txtName.setReadOnly(True)
+        self.txtEmail.setReadOnly(True)
+        self.cmbDate.setEnabled(False)
+        self.cmbMonth.setEnabled(False)
+        self.cmbYear.setEnabled(False)
+        self.txtHeight.setReadOnly(True)
+        self.txtWeight.setReadOnly(True)
+        self.txtBodyfat.setReadOnly(True)
+        self.cmbExperience.setEnabled(False)
+        self.cmbActivity.setEnabled(False)
+
+    def snapImg(self):
+        rectangle = QRect(QPoint(89, 122), QSize(1338, 831))
+        pxm = self.grab(rectangle)
+        pxm.save("screenshot/account.png")
+
+    def gotoLiftLog(self):
+        liftLog = liftLogPage()
+        widget.addWidget(liftLog)
+        widget.setCurrentWidget(liftLog)
+
+    def gotoTDEE(self):
+        tdee = tdeePage()
+        widget.addWidget(tdee)
+        widget.setCurrentWidget(tdee)
+
+    def gotoLiftStats(self):
+        liftstats = liftStatsPage()
+        widget.addWidget(liftstats)
+        widget.setCurrentWidget(liftstats)
+
+    def gotoLiftRecord(self):
+        liftrecord = liftRecordPage()
+        widget.addWidget(liftrecord)
+        widget.setCurrentWidget(liftrecord)
+
+    def gotoStrengthStandard(self):
+        strengthSt = strengthStandardPage()
+        widget.addWidget(strengthSt)
+        widget.setCurrentWidget(strengthSt)
+
+    def gotoChangePsw(self):
+        changePsw = changePswPageFromInside()
+        widget.addWidget(changePsw)
+        widget.setCurrentWidget(changePsw)
+
+    def gotoLogin(self):
+        login = loginPage()
+        widget.addWidget(login)
+        widget.setCurrentWidget(login)
+
+    def gotoHome(self):
+        home = homePage()
+        widget.addWidget(home)
+        widget.setCurrentWidget(home)
+
 
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
+    news = scrapingContent("https://www.health.com/fitness","https://www.t-nation.com/training/","https://www.theguardian.com/sport/olympic-games-2020")
     widget = QtWidgets.QStackedWidget()
+    #web = QWebEngineView()
+    #web.load(QUrl("https://www.health.com/fitness/this-50-push-up-challenge-will-transform-your-body-in-30-days"))
+    #web.show()
     screen1 = loginPage()
-    screen2 = signUpPage()
-    screen3 = liftLogPage()
     widget.addWidget(screen1)
-    widget.addWidget(screen2)
-    widget.addWidget(screen3)
     widget.show()
+
 
     try:
         sys.exit(app.exec_())

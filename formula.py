@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from model import Connection
 import csv
+import io
+from PIL import Image
 
 def getLastSession():
     query = "SELECT MAX(id) FROM session"
@@ -65,12 +67,63 @@ def listOfExcercise():
 def getLiftName(lift):
     query = "SELECT name FROM excercise WHERE abbreviation = %s"
     record = (lift,)
-    con = Connection
+    con = Connection(query,record)
     result = con.fetchOneQuerySQL()
     return result[0]
 
+def countRecordOf(user):
+    query = "SELECT COUNT(user_id) FROM lift WHERE user_id = %s"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchOneQuerySQL()
+    return result[0]
+
+def countLoginOf(user):
+    query = "SELECT COUNT(user) FROM session WHERE user = %s"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchOneQuerySQL()
+    return result[0]
+
+def countPswChangeOf(user):
+    query = "SELECT COUNT(user_id) FROM passwordchanges WHERE user_id = %s"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchOneQuerySQL()
+    return result[0]
+
+def getLastFiveSession(user):
+    query = "SELECT dateLogin FROM session WHERE user = %s ORDER BY id DESC LIMIT 5"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchAllQuerySQL()
+    temp = [r[0] for r in result]
+    res = [r.strftime('%Y-%m-%d %H:%M:%S') for r in temp]
+    res = res + ["","","",""]
+    return res
+
+def getLastFiveRecord(user):
+    query = "SELECT DISTINCT dateCreated FROM lift WHERE user_id = %s ORDER BY dateCreated DESC LIMIT 5"
+    record = (user,)
+    con = Connection(query,record)
+    result = con.fetchAllQuerySQL()
+    temp = [r[0] for r in result]
+    res = [r.strftime('%Y-%m-%d') for r in temp]
+    res = res + ["","","","",""]
+    return res
+
 def returnDateLogin(user_id):
     query = "SELECT DISTINCT dateCreated FROM lift WHERE user_id = %s"
+    record = (user_id,)
+    #result = list(fetchAllQuerySQL(query,record))
+    con = Connection(query,record)
+    result = con.fetchAllQuerySQL()
+    date = [d[0] for d in result]
+    dateString = [dt.strftime("%Y-%m-%d") for dt in date]
+    return dateString
+
+def returnDatePlan(user_id):
+    query = "SELECT DISTINCT dateCreated FROM plan WHERE user_id = %s"
     record = (user_id,)
     #result = list(fetchAllQuerySQL(query,record))
     con = Connection(query,record)
@@ -379,10 +432,11 @@ def estimatedPLTotal():
 def wilksScore(w):
     return wilksFactor(w)[0]*estimatedPLTotal()
 
-def repMaxHistoryOf(lift):
+def repMaxHistoryOf(lift,id):
     sqlEngine = create_engine('mysql+pymysql://root:@127.0.0.1', pool_recycle=3600)
     dbConnection = sqlEngine.connect()
-    df = pd.read_sql("select * from journfit.lift", dbConnection);
+    query = "select * from journfit.lift where user_id = %s"
+    df = pd.read_sql_query(query, dbConnection, params=[id]);
     pd.set_option('display.expand_frame_repr', False)
 
     df = df[df["exercise"] == lift]
@@ -391,7 +445,7 @@ def repMaxHistoryOf(lift):
     df = df['oneRep'].max()
     df = df.reset_index()
 
-    bl = findBestLiftOf(lift)
+    bl = findBestLiftOf(lift,id)
 
     ax = plt.gca()
     df.plot(kind='line',x='dateCreated',y='oneRep',ax=ax)
@@ -401,8 +455,21 @@ def repMaxHistoryOf(lift):
     ax.annotate("Best Lift", xy = (xmax,ymax), xytext=(xmax,ymax+5,),
         arrowprops=dict(facecolor='black', shrink=1))
     #arrowprops=dict(arrowstyle="-",connectionstyle="arc3,rad=0.1")
+    #size = (1071,401)
+    #plt.figure(figsize=size)
     plt.title(getLiftName(lift))
-    plt.show()
+    plt.rcParams["figure.figsize"] = (11,4)
+    return plt
+    #plt.show()
+
+def plotToImage(plt):
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    im = Image.open(buf)
+    #im.show()
+    return im
+    #buf.close()
 
 def returnDictFromCSV(weight):
     file = f'csv\\{weight}.csv'
@@ -545,6 +612,10 @@ if __name__ == '__main__':
     #print(listOfExcercise())
     #returnDictFromCSV(85)
     #getStatusOfLift("Front Squat",107.5,85)
-    getStatusOfLiftBW("Dip",40,85)
+    #getStatusOfLiftBW("Dip",40,85)
     #getStatusOfLift("Bench Press",110,85)
     #getStatusOfLift("Overhead Press",75,85)
+    print(findBestLiftOf("BS",1))
+    #r = repMaxHistoryOf("BS",1)
+    #r.show()
+    #plotToImage(r)

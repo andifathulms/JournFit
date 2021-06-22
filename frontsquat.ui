@@ -1,0 +1,1735 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1461</width>
+    <height>989</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1461</width>
+    <height>989</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1461</width>
+    <height>989</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QFrame" name="Header">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>104</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QFrame {
+background-color: rgb(3, 114, 188);
+}</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QFrame" name="TittleBarContainer">
+         <property name="styleSheet">
+          <string notr="true">border-radius : 10px</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <widget class="QFrame" name="LeftMenuToggle">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>71</width>
+            <height>81</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">*{background-color: rgb(3, 114, 188);
+color: rgb(255, 255, 255);
+border-radius : 10px
+}
+</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QPushButton" name="btnToggle">
+             <property name="minimumSize">
+              <size>
+               <width>59</width>
+               <height>70</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">*{
+	background-image: url(:/ButtonIcon/menuWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left :50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center ;
+}
+*:hover{
+background-color: rgb(4, 155, 255);
+}</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>30</width>
+               <height>30</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QLabel" name="appLogo">
+          <property name="geometry">
+           <rect>
+            <x>80</x>
+            <y>10</y>
+            <width>221</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>:/Image/Tulisan JournFit-01.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="profileFoto">
+          <property name="geometry">
+           <rect>
+            <x>1149</x>
+            <y>20</y>
+            <width>51</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>51</width>
+            <height>51</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>51</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>:/ButtonIcon/Downloads/Icon Warna/user.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QLabel" name="profileName">
+          <property name="geometry">
+           <rect>
+            <x>1220</x>
+            <y>20</y>
+            <width>181</width>
+            <height>51</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <family>Century Gothic</family>
+            <pointsize>10</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Andi Fathul</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="Body">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(17, 140, 255);
+background-color: rgb(3, 114, 188);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QFrame" name="LeftSideMenu">
+         <property name="maximumSize">
+          <size>
+           <width>70</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QFrame {
+background-color: rgb(3, 114, 188);
+border-radius : 10px;
+padding : 5px 10px;
+}
+QPushButton {
+
+}
+QPushButton:hover{
+background-color: rgb(4, 155, 255);
+}
+
+</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>1</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="btnHome">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/homeWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+text-align:left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Home</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLiftLog">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/userWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Training Log</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnTDEE">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/userWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>TDEE</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLiftStats">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/userWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Lift Stats</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLiftRecord">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/userWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Lift Record</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnStrengthStandard">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/userWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Strength Standard</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnAccount">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/userWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Account</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnSettings">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	
+	background-image: url(:/ButtonIcon/settingsWhiteColor24Px.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Settings</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnToPDF">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	
+	background-image: url(:/ButtonIcon/pdf-file.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Export to PDF</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnToEmail">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/email.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Sent to Email</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnChangePsw">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	background-image: url(:/ButtonIcon/padlock.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Change Password</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLogout">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>56</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Century Gothic</family>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">*{
+	
+	background-image: url(:/ButtonIcon/logoutWhite.png);
+padding : 20px 5px;
+background-repeat : none;
+padding-left : 50px;
+border:none;
+	color: rgb(255, 255, 255);
+	background-color: rgb(3, 114, 188);
+border-radius : 10px;
+background-position : center left;
+}
+*:hover {
+	background-color: rgb(4, 155, 255);
+}</string>
+            </property>
+            <property name="text">
+             <string>Log Out</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="leftNav">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QFormLayout" name="formLayout">
+             <property name="labelAlignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <property name="formAlignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <property name="horizontalSpacing">
+              <number>0</number>
+             </property>
+             <property name="verticalSpacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="minimumSize">
+          <size>
+           <width>1320</width>
+           <height>803</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1320</width>
+           <height>803</height>
+          </size>
+         </property>
+         <property name="cursor" stdset="0">
+          <cursorShape>ArrowCursor</cursorShape>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">/* ScrollBar Vertical*/
+QScrollBar:vertical {
+	border : none ;
+	background-color: rgb(255, 255, 255);
+	width : 14px;
+	margin : 15px 0px 15px 0px;
+}
+
+/*Handle Bar Vertical*/
+QScrollBar::handle:vertical {
+	background-color: rgb(137, 207, 255);
+	min-height : 30px;
+	border-radius : 5px;
+}
+QScrollBar::handle:vertical:hover{
+	background-color: rgb(83, 178, 243);
+}
+QScrollBar::handle:vertical:pressed{
+	background-color: rgb(52, 153, 223);
+}
+
+/*Btn bagian atas ScrollBar Vertical*/
+QScrollBar::sub-line:vertical {
+	
+	background-color: rgb(19, 156, 250);
+	height : 15px;
+	border-top-left-radius : 7px;
+	border-top-right-radius : 7px;
+	subcontrol-position : top;
+	subcontrol-origin : margin;
+}
+QScrollBar::sub-line:vertical:hover {
+	background-color: rgb(73, 172, 241);
+}
+QScrollBar::sub-line:vertical:pressed{	
+	background-color: rgb(40, 146, 220);
+}
+
+/*Btn bagian bawah ScrollBar Vertical*/
+QScrollBar::add-line:vertical {
+	background-color: rgb(19, 156, 250);
+	height : 15px;
+	border-bottom-left-radius : 7px;
+	border-bottom-right-radius : 7px;
+	subcontrol-position : bottom;
+	subcontrol-origin : margin;
+}
+QScrollBar::add-line:vertical:hover {
+	background-color: rgb(73, 172, 241);
+}
+QScrollBar::add-line:vertical:pressed{	
+	background-color: rgb(40, 146, 220);
+}</string>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1304</width>
+            <height>1913</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QFrame" name="frame_5">
+             <property name="minimumSize">
+              <size>
+               <width>1280</width>
+               <height>1891</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(25, 125, 193);</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <widget class="QLabel" name="label_10">
+              <property name="geometry">
+               <rect>
+                <x>490</x>
+                <y>470</y>
+                <width>300</width>
+                <height>56</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>56</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>20</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background : transparent;
+color : rgb(255, 255, 255) ;
+image : transparent;</string>
+              </property>
+              <property name="text">
+               <string>Excercise Tutorial</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label">
+              <property name="geometry">
+               <rect>
+                <x>30</x>
+                <y>580</y>
+                <width>241</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>EXERCISE DETAILS</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_2">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>610</y>
+                <width>1151</width>
+                <height>41</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Target muscles : Quadriceps (Vastus Lateralis, Vastus Intermedius, Vastus Medialis, Rectus Femoris)</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_3">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>650</y>
+                <width>451</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Synergists : Gluteus Maximus, Adductor Magnus, Soleus</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_4">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>690</y>
+                <width>1171</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Dynamic stabilizers :  Hamstrings, Gastrocnemius</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_5">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>730</y>
+                <width>821</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Important stabilizers (not highlighted): Erector Spinae, Rectus Abdominis, Obliques</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_6">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>800</y>
+                <width>261</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Mechanics: Compound</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_7">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>920</y>
+                <width>821</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Load a barbell on a rack at upper-chest height.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_8">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>950</y>
+                <width>1101</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Step under the barbell so that it rests on the front of your shoulders and place your fingers under the barbell, </string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_9">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>830</y>
+                <width>151</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Force: Push</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_11">
+              <property name="geometry">
+               <rect>
+                <x>30</x>
+                <y>880</y>
+                <width>261</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>STARTING POSITION</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_12">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1040</y>
+                <width>1241</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Dismount the barbell and step backward carefully. Your feet should be shoulder-width apart and pointing slightly outwards.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_13">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1200</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Exhale as you push your body back up to the starting position, driving through your heels and keeping your torso upright.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_14">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1140</y>
+                <width>1101</width>
+                <height>41</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Inhale as you squat down by simultaneously pushing your butt backward and bending your knees forward.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_15">
+              <property name="geometry">
+               <rect>
+                <x>30</x>
+                <y>1100</y>
+                <width>261</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>EXECUTION</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_16">
+              <property name="geometry">
+               <rect>
+                <x>60</x>
+                <y>1170</y>
+                <width>951</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> Keep your torso upright, and descend at least until your knees are bent at a 90-degree angle.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_17">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1230</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Repeat.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_18">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1320</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Keep your back straight, torso upright, head facing forward, and feet flat.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_19">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1350</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Keep your knees and feet pointing in the same direction.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_20">
+              <property name="geometry">
+               <rect>
+                <x>30</x>
+                <y>1280</y>
+                <width>261</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>16</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>COMMENTS AND TIPS</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_21">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1440</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • If lifting heavy, have a spotter ready, or use a squat rack or power rack.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_22">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1380</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Practice proper barbell squat form with an unloaded barbell.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_23">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1410</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • Start light and add weight gradually, allowing your legs and lower back to adapt.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_24">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1470</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • The barbell squat and the barbell front squat work the same target and synergistic muscles.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_25">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1500</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • The barbell front squat is more advanced than the barbell squat</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_26">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>1560</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string> • See also the barbell front box squat.</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_27">
+              <property name="geometry">
+               <rect>
+                <x>60</x>
+                <y>760</y>
+                <width>821</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Anterior and Lateral Deltoid, Clavicular (Upper) Pectoralis Major, Levator Scapulae</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_28">
+              <property name="geometry">
+               <rect>
+                <x>60</x>
+                <y>980</y>
+                <width>1051</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>with your elbows pointing forward (if you do not have the flexibility to place your fingers under the barbell, </string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_29">
+              <property name="geometry">
+               <rect>
+                <x>60</x>
+                <y>1010</y>
+                <width>821</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>you can cross your arms and place your hands on top of the barbell).</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_30">
+              <property name="geometry">
+               <rect>
+                <x>70</x>
+                <y>1530</y>
+                <width>1211</width>
+                <height>31</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>however, it is not as effective at building mass because it doesn’t permit as much weight to be lifted.</string>
+              </property>
+             </widget>
+             <widget class="QPushButton" name="btnPrev">
+              <property name="geometry">
+               <rect>
+                <x>40</x>
+                <y>30</y>
+                <width>131</width>
+                <height>51</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(4, 155, 255);</string>
+              </property>
+              <property name="text">
+               <string>Prev</string>
+              </property>
+             </widget>
+             <widget class="QPushButton" name="btnNext">
+              <property name="geometry">
+               <rect>
+                <x>1110</x>
+                <y>30</y>
+                <width>131</width>
+                <height>51</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(4, 155, 255);</string>
+              </property>
+              <property name="text">
+               <string>Next</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_37">
+              <property name="geometry">
+               <rect>
+                <x>480</x>
+                <y>110</y>
+                <width>300</width>
+                <height>56</height>
+               </rect>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>300</width>
+                <height>56</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>Century Gothic</family>
+                <pointsize>20</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background : transparent;
+color : rgb(255, 255, 255) ;
+image : transparent;</string>
+              </property>
+              <property name="text">
+               <string>Front Squat</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+             <widget class="QPushButton" name="btnBack">
+              <property name="geometry">
+               <rect>
+                <x>570</x>
+                <y>30</y>
+                <width>131</width>
+                <height>51</height>
+               </rect>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(4, 155, 255);</string>
+              </property>
+              <property name="text">
+               <string>Back to home</string>
+              </property>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

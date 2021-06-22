@@ -83,6 +83,7 @@ class User():
             self.bodyfat = user[10]
             self.experience = user[11]
             self.activity = user[12]
+            self.image = user[13]
             self.age = self.calculateAge()
             self.type = 0
             #print(user)
@@ -134,6 +135,12 @@ class User():
             con = Connection(query,record)
             con.querySQL()
 
+    def insertImage(self, image):
+        query = " UPDATE user SET image = %s WHERE user_id = %s "
+        record = (image,self.userID)
+        con = Connection(query,record)
+        con.querySQL()
+
     def getID(self):
         query = "SELECT user_id FROM user WHERE name = %s"
         record = (self.name,)
@@ -145,6 +152,17 @@ class User():
     def changePassword(self, psw):
         query = " UPDATE user SET password = %s WHERE user_id = %s"
         record = (psw, self.userID)
+        con = Connection(query,record)
+        con.querySQL()
+
+        now = datetime.now()
+        date = now.strftime('%Y-%m-%d %H:%M:%S')
+        query = """
+                INSERT INTO passwordchanges(user_id,oldPassword,newPassword,dateChange)
+                VALUES
+                (%s, %s, %s, %s)
+                """
+        record = (self.userID, self.password, psw, date)
         con = Connection(query,record)
         con.querySQL()
 
@@ -174,6 +192,17 @@ class User():
         con = Connection(query,record)
         con.querySQL()
 
+    def updateUser(self, fullname, name, email, dobDay, dobMonth, dobYear, weight, height, bf, exp, activity):
+        query = """
+                UPDATE user 
+                SET Fullname = %s, name = %s, email = %s, dateBirth = %s, weight = %s, height = %s,bodyfat = %s,experience = %s, activityLevel = %s
+                WHERE user_id = %s
+                """
+        record = (fullname,name,email,f'{dobYear}-{dobMonth}-{dobDay}',weight,height,bf,exp,activity,self.userID)
+        con = Connection(query,record)
+        con.querySQL()
+        self.addToWeightChanges(weight)
+
     def calculateAge(self):
         today = datetime.now()
         born = self.dateOfBirth
@@ -192,6 +221,19 @@ class User():
                 SELECT name,weights,reps,row,id 
                 FROM lift LEFT JOIN excercise
                 ON lift.exercise = excercise.abbreviation
+                WHERE dateCreated = %s AND user_id = %s
+                """
+        record = (date,self.userID)
+        con = Connection(query,record)
+        #result = list(fetchAllQuerySQL(query,record))
+        result = con.fetchAllQuerySQL()
+        return result
+
+    def showPlanOn(self, date):
+        query = """
+                SELECT name,weights,reps,row,id 
+                FROM plan LEFT JOIN excercise
+                ON plan.exercise = excercise.abbreviation
                 WHERE dateCreated = %s AND user_id = %s
                 """
         record = (date,self.userID)
@@ -253,6 +295,12 @@ class Lift():
             msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
             print(msg)
 
+    def insertMedia(self, media):
+        query = " UPDATE lift SET media = %s WHERE id = %s "
+        record = (media,self.liftID)
+        con = Connection(query,record)
+        con.querySQL()
+
     def updateLift(self, exercise, weights, reps, row, media):
         query = """
                 UPDATE lift SET exercise = %s, weights = %s, reps = %s, media = %s
@@ -270,11 +318,71 @@ class Lift():
         con = Connection(query,record)
         con.querySQL()
 
+class Plan(Lift):
+    def __init__(self, *args):
+        if len(args) == 1 :
+            lift = self.getPlan(args[0])[0]
+            self.liftID = lift[0]
+            self.userID = lift[1]
+            self.exercise = lift[2]
+            self.dateCreated = lift[3]
+            self.weights = lift[4]
+            self.reps = lift[5]
+            self.row = lift[6]
+            self.media = lift[7]
+        else:
+            super(Plan, self).__init__(*args)
+        
+
+    def getPlan(self, id):
+        query = "SELECT * FROM plan WHERE id = %s"
+        record = (id,)
+        con = Connection(query,record)
+        result = con.fetchAllQuerySQL()
+        return result
+
+    def addPlan(self):
+        try:
+            query = """
+                    INSERT INTO plan(user_id, exercise, dateCreated, weights, reps, row, media) 
+                    VALUES
+                    (%s, %s, %s, %s, %s, %s, %s)
+                    """
+
+            record = (self.userID, self.exercise, self.dateCreated, self.weights, self.reps, self.row, self.media)
+            con = Connection(query,record)
+            con.querySQL()
+        except Exception as ex:
+            msg = f'Error : {type(ex).__name__} ,arg = {ex.args}'
+            print(msg)
+
+    def updatePlan(self, exercise, weights, reps, row, media):
+        query = """
+                UPDATE plan SET exercise = %s, weights = %s, reps = %s, media = %s
+                WHERE id = %s
+                """
+        record = (exercise,weights,reps,media,self.liftID)
+        print(f'Update id- {self.liftID}')
+        con = Connection(query,record)
+        con.querySQL()
+
+    def deletePlan(self):
+        query = "DELETE FROM plan WHERE id = %s"
+        record = (self.liftID,)
+        print(f'Delete id-{self.liftID}')
+        con = Connection(query,record)
+        con.querySQL()
+
 if __name__ == '__main__':
-    u1 = User(1)
-    u2 = User("Fikri","Fikri","123","123","Male","1999-01-01","180","85","20","1","1")
-    print(u1.age)
-    print(u2.age)
+    #u1 = User(1)
+    #u2 = User("Fikri","Fikri","123","123","Male","1999-01-01","180","85","20","1","1")
+    #print(u1.age)
+    #print(u2.age)
     #print(u1.getUser(1))
     #u1.changePassword("12345")
     #l = Lift(10)
+    #p = Plan(1,"BP","2021-05-16",100,4,1,"")
+    #print(p.weights)
+    l = Lift(2740)
+    print(l.getLift(2740))
+    #print(l.weights)
